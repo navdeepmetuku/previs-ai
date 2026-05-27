@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 288">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#080808"/>
+      <stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="face" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#1a1a1a"/>
+      <stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="vig" cx="50%" cy="50%" r="60%">
+      <stop offset="20%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.97"/>
+    </radialGradient>
+    <filter id="blur2"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+  <rect width="512" height="288" fill="#000"/>
+  <!-- very dim ambient -->
+  <rect width="512" height="288" fill="url(#bg)"/>
+  <!-- floor line -->
+  <rect x="0" y="218" width="512" height="70" fill="#000"/>
+  <!-- looming figure, very close (extreme close framing of full body) -->
+  <!-- body mass -->
+  <rect x="196" y="60" width="120" height="158" fill="#050505"/>
+  <!-- head -->
+  <ellipse cx="256" cy="58" rx="48" ry="52" fill="#080808"/>
+  <!-- face light from below -->
+  <ellipse cx="256" cy="90" rx="30" ry="22" fill="#1f1f1f" filter="url(#blur2)"/>
+  <!-- eye sockets -->
+  <ellipse cx="238" cy="52" rx="11" ry="9" fill="#000"/>
+  <ellipse cx="274" cy="52" rx="11" ry="9" fill="#000"/>
+  <!-- tiny eye glints -->
+  <circle cx="238" cy="52" r="2.5" fill="#333"/>
+  <circle cx="274" cy="52" r="2.5" fill="#333"/>
+  <!-- mouth crack -->
+  <path d="M238 76 Q256 80 274 76" stroke="#1a1a1a" stroke-width="1.5" fill="none"/>
+  <!-- arms wide -->
+  <line x1="196" y1="120" x2="120" y2="160" stroke="#050505" stroke-width="22" stroke-linecap="round"/>
+  <line x1="316" y1="120" x2="392" y2="160" stroke="#050505" stroke-width="22" stroke-linecap="round"/>
+  <!-- heavy vignette -->
+  <rect width="512" height="288" fill="url(#vig)"/>
+  <!-- letterbox -->
+  <rect width="512" height="20" fill="#000"/>
+  <rect y="268" width="512" height="20" fill="#000"/>
+  <!-- corner markers -->
+  <g stroke="#fff" stroke-width="1" stroke-opacity="0.12" fill="none">
+    <path d="M26 28 L26 21 L19 21"/>
+    <path d="M486 28 L486 21 L493 21"/>
+    <path d="M26 260 L26 267 L19 267"/>
+    <path d="M486 260 L486 267 L493 267"/>
+  </g>
+</svg>

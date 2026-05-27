@@ -1,0 +1,306 @@
+@import "tailwindcss";
+
+/* ── Design Tokens ──────────────────────────────────────────────────────────── */
+:root {
+  /* Ink palette — darkest to panel-elevated */
+  --ink-0:  #04040a;
+  --ink-1:  #080810;
+  --ink-2:  #0c0c18;
+  --ink-3:  #10101e;
+  --ink-4:  #141424;
+
+  /* Accent */
+  --amber:       #fbbf24;
+  --amber-60:    rgba(251,191,36,0.60);
+  --amber-30:    rgba(251,191,36,0.30);
+  --amber-15:    rgba(251,191,36,0.15);
+  --amber-glow:  0 0 40px rgba(251,191,36,0.18);
+  --amber-pulse: 0 0 80px rgba(251,191,36,0.12);
+
+  /* Surface layers */
+  --surface-1: rgba(255,255,255,0.015);
+  --surface-2: rgba(255,255,255,0.025);
+  --surface-3: rgba(255,255,255,0.04);
+
+  /* Borders */
+  --border-0: rgba(255,255,255,0.03);
+  --border-1: rgba(255,255,255,0.06);
+  --border-2: rgba(255,255,255,0.10);
+  --border-3: rgba(255,255,255,0.16);
+
+  /* Typography tokens */
+  --font-sans: var(--font-geist-sans, "Arial", sans-serif);
+  --font-mono: var(--font-geist-mono, "Courier New", monospace);
+
+  /* Motion — cinematic easing curves */
+  --ease-cinema:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-expo:   cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-standard:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Duration scale */
+  --dur-instant:  80ms;
+  --dur-fast:     150ms;
+  --dur-normal:   240ms;
+  --dur-slow:     400ms;
+  --dur-cinema:   700ms;
+
+  /* Depth / shadows */
+  --shadow-sm:    0 2px 8px  rgba(0,0,0,0.3);
+  --shadow-md:    0 4px 24px rgba(0,0,0,0.45);
+  --shadow-lg:    0 8px 48px rgba(0,0,0,0.65);
+  --shadow-panel: 0 16px 64px rgba(0,0,0,0.7);
+
+  /* Background */
+  --background: var(--ink-1);
+  --foreground: #eeeef4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground:  var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Film grain overlay ─────────────────────────────────────────────────────── */
+@keyframes grain {
+  0%,100%  { transform: translate(0,0); }
+  10%  { transform: translate(-2%,-3%); }
+  20%  { transform: translate(3%,2%); }
+  30%  { transform: translate(-1%,4%); }
+  40%  { transform: translate(4%,-1%); }
+  50%  { transform: translate(-3%,3%); }
+  60%  { transform: translate(2%,-4%); }
+  70%  { transform: translate(-4%,1%); }
+  80%  { transform: translate(1%,-2%); }
+  90%  { transform: translate(-2%,4%); }
+}
+
+.film-grain::before {
+  content: '';
+  position: fixed;
+  inset: -200%;
+  width: 400%;
+  height: 400%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  pointer-events: none;
+  animation: grain 0.6s steps(1) infinite;
+  z-index: 9999;
+}
+
+/* ── Loading shimmer ────────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.2s var(--ease-standard) infinite;
+}
+
+/* ── Scrollbars ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar              { width: 3px; height: 3px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: rgba(255,255,255,0.10); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover  { background: rgba(255,255,255,0.18); }
+
+.timeline-scroll::-webkit-scrollbar       { height: 2px; }
+.timeline-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); }
+.timeline-scroll::-webkit-scrollbar-thumb:hover { background: var(--amber-30); }
+
+/* ── Glass surface utility ──────────────────────────────────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.025);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid var(--border-1);
+}
+
+.glass-dark {
+  background: rgba(4,4,10,0.70);
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  border: 1px solid var(--border-0);
+}
+
+/* ── Cinematic transitions ──────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-right {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in    { animation: fade-in    var(--dur-normal) var(--ease-cinema) both; }
+.animate-fade-up    { animation: fade-up    var(--dur-slow)   var(--ease-cinema) both; }
+.animate-fade-right { animation: fade-right var(--dur-slow)   var(--ease-cinema) both; }
+.animate-scale-in   { animation: scale-in   var(--dur-normal) var(--ease-cinema) both; }
+
+/* Staggered children — add delay via inline style or :nth-child overrides */
+.stagger-children > * {
+  animation: fade-up var(--dur-slow) var(--ease-cinema) both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+
+/* ── Viewport camera animations ─────────────────────────────────────────────── */
+@keyframes handheld {
+  0%   { transform: translate(0,0)     rotate(0deg);     }
+  15%  { transform: translate(-1.5px,0.8px) rotate(-0.12deg); }
+  30%  { transform: translate(1px,-0.6px)   rotate(0.09deg);  }
+  45%  { transform: translate(-0.8px,1.3px) rotate(-0.07deg); }
+  60%  { transform: translate(1.3px,0.4px)  rotate(0.11deg);  }
+  75%  { transform: translate(-0.5px,-1.1px)rotate(-0.06deg); }
+  90%  { transform: translate(0.7px,0.9px)  rotate(0.05deg);  }
+  100% { transform: translate(0,0)     rotate(0deg);     }
+}
+@keyframes dolly-in  { from{transform:scale(1)} to{transform:scale(1.035)} }
+@keyframes dolly-out { from{transform:scale(1)} to{transform:scale(0.965)} }
+@keyframes crane     { from{transform:translateY(0)} to{transform:translateY(-1.5%)} }
+
+.viewport-handheld  { animation: handheld  1.4s ease-in-out infinite alternate; }
+.viewport-dolly-in  { animation: dolly-in  2.5s ease-in-out infinite alternate; }
+.viewport-dolly-out { animation: dolly-out 2.5s ease-in-out infinite alternate; }
+.viewport-crane     { animation: crane     3s   ease-in-out infinite alternate; }
+
+/* ── VISH typewriter cursor ─────────────────────────────────────────────────── */
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.typewriter-cursor::after {
+  content: '▋';
+  margin-left: 1px;
+  animation: blink 0.9s step-end infinite;
+  color: var(--amber-60);
+}
+
+/* ── Ambient glow pulse ─────────────────────────────────────────────────────── */
+@keyframes glow-pulse {
+  0%,100% { box-shadow: var(--amber-pulse); }
+  50%     { box-shadow: var(--amber-glow);  }
+}
+.glow-pulse { animation: glow-pulse 3s ease-in-out infinite; }
+
+/* ── Focus ring override — cinematic amber ──────────────────────────────────── */
+:focus-visible {
+  outline: 1.5px solid var(--amber-60);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* ── VISH Mascot animations ─────────────────────────────────────────────────── */
+
+/* Idle: gentle float + slow breath */
+@keyframes vish-float {
+  0%, 100% { transform: translateY(0px) scale(1);       }
+  40%      { transform: translateY(-4px) scale(1.008);  }
+  60%      { transform: translateY(-3px) scale(1.005);  }
+}
+.vish-float {
+  animation: vish-float 3.6s ease-in-out infinite;
+}
+
+/* Thinking: gentle rock side-to-side */
+@keyframes vish-think {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-4deg) translateY(-2px); }
+  75%      { transform: rotate(4deg)  translateY(-2px); }
+}
+.vish-think {
+  animation: vish-think 1.2s ease-in-out infinite;
+}
+
+/* Error: short horizontal shake */
+@keyframes vish-shake {
+  0%, 100% { transform: translateX(0); }
+  15%      { transform: translateX(-4px); }
+  35%      { transform: translateX(4px); }
+  55%      { transform: translateX(-3px); }
+  75%      { transform: translateX(3px); }
+}
+.vish-shake {
+  animation: vish-shake 0.5s var(--ease-cinema) both;
+}
+
+/* Thinking orbital dot — rotates around the head */
+@keyframes vish-orbit {
+  from { transform-box: fill-box; transform-origin: -25px 35px; transform: rotate(0deg); }
+  to   { transform-box: fill-box; transform-origin: -25px 35px; transform: rotate(360deg); }
+}
+.vish-orbit {
+  animation: vish-orbit 1.4s linear infinite;
+}
+
+/* ── Panel depth system ──────────────────────────────────────────────────────── */
+
+/* Layered panel — main workspace surface */
+.panel-1 {
+  background: var(--surface-1);
+  border: 1px solid var(--border-0);
+}
+/* Elevated panel — sidebars, detail panels */
+.panel-2 {
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+}
+/* Highest panel — modals, overlays, tooltips */
+.panel-3 {
+  background: rgba(12,12,22,0.92);
+  border: 1px solid var(--border-2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ── Cinematic hover lift ─────────────────────────────────────────────────────── */
+.hover-lift {
+  transition: transform var(--dur-normal) var(--ease-cinema),
+              box-shadow var(--dur-normal) var(--ease-cinema);
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+/* ── Presentation ambient mood tint ────────────────────────────────────────── */.mood-bg-tense       { background: radial-gradient(ellipse at center, rgba(120,20,20,0.35) 0%, transparent 70%); }
+.mood-bg-dramatic    { background: radial-gradient(ellipse at center, rgba(60,10,100,0.35) 0%, transparent 70%); }
+.mood-bg-romantic    { background: radial-gradient(ellipse at center, rgba(150,50,30,0.30) 0%, transparent 70%); }
+.mood-bg-action      { background: radial-gradient(ellipse at center, rgba(160,60,10,0.35) 0%, transparent 70%); }
+.mood-bg-mysterious  { background: radial-gradient(ellipse at center, rgba(20,20,100,0.35) 0%, transparent 70%); }
+.mood-bg-melancholic { background: radial-gradient(ellipse at center, rgba(20,40,80,0.35)  0%, transparent 70%); }
+.mood-bg-triumphant  { background: radial-gradient(ellipse at center, rgba(120,80,10,0.30) 0%, transparent 70%); }
+.mood-bg-horror      { background: radial-gradient(ellipse at center, rgba(0,0,0,0.5)      0%, transparent 70%); }
+.mood-bg-comedic     { background: radial-gradient(ellipse at center, rgba(30,80,20,0.25)  0%, transparent 70%); }
+.mood-bg-serene      { background: radial-gradient(ellipse at center, rgba(10,60,70,0.30)  0%, transparent 70%); }

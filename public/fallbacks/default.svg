@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 288">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#0e0e14"/>
+      <stop offset="100%" stop-color="#020204"/>
+    </radialGradient>
+    <radialGradient id="vig" cx="50%" cy="50%" r="70%">
+      <stop offset="40%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.9"/>
+    </radialGradient>
+    <linearGradient id="shaft" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="5"/></filter>
+  </defs>
+  <rect width="512" height="288" fill="url(#bg)"/>
+  <!-- subtle light shaft -->
+  <polygon points="236,0 276,0 295,288 217,288" fill="url(#shaft)" filter="url(#blur)"/>
+  <!-- ground -->
+  <rect x="0" y="215" width="512" height="73" fill="#010101"/>
+  <!-- generic standing figure -->
+  <ellipse cx="256" cy="128" rx="13" ry="15" fill="#080808"/>
+  <path d="M243 143 L241 215 L271 215 L269 143 Z" fill="#080808"/>
+  <line x1="243" y1="158" x2="220" y2="183" stroke="#080808" stroke-width="8" stroke-linecap="round"/>
+  <line x1="269" y1="158" x2="292" y2="183" stroke="#080808" stroke-width="8" stroke-linecap="round"/>
+  <line x1="249" y1="215" x2="243" y2="262" stroke="#080808" stroke-width="10" stroke-linecap="round"/>
+  <line x1="263" y1="215" x2="269" y2="262" stroke="#080808" stroke-width="10" stroke-linecap="round"/>
+  <!-- vignette -->
+  <rect width="512" height="288" fill="url(#vig)"/>
+  <!-- letterbox -->
+  <rect width="512" height="20" fill="#000"/>
+  <rect y="268" width="512" height="20" fill="#000"/>
+  <!-- corner markers -->
+  <g stroke="#fff" stroke-width="1" stroke-opacity="0.22" fill="none">
+    <path d="M26 28 L26 21 L19 21"/>
+    <path d="M486 28 L486 21 L493 21"/>
+    <path d="M26 260 L26 267 L19 267"/>
+    <path d="M486 260 L486 267 L493 267"/>
+  </g>
+</svg>

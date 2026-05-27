@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 288">
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#050a14"/>
+      <stop offset="100%" stop-color="#0a1428"/>
+    </linearGradient>
+    <linearGradient id="fog" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a2a4a" stop-opacity="0"/>
+      <stop offset="60%" stop-color="#2a3a5a" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#1a2a4a" stop-opacity="0.7"/>
+    </linearGradient>
+    <radialGradient id="moon" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d0e0ff"/>
+      <stop offset="100%" stop-color="#7090c0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vig" cx="50%" cy="50%" r="70%">
+      <stop offset="40%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.85"/>
+    </radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="512" height="288" fill="url(#sky)"/>
+  <!-- moon glow -->
+  <circle cx="256" cy="55" r="38" fill="#7090c0" fill-opacity="0.12" filter="url(#glow)"/>
+  <circle cx="256" cy="55" r="18" fill="url(#moon)" filter="url(#glow)"/>
+  <!-- distant building 1 -->
+  <rect x="60" y="130" width="65" height="90" fill="#080d1a"/>
+  <rect x="74" y="142" width="7" height="8" fill="#1a2a44" fill-opacity="0.6"/>
+  <rect x="88" y="142" width="7" height="8" fill="#1a2a44" fill-opacity="0.4"/>
+  <rect x="74" y="156" width="7" height="8" fill="#1a2a44" fill-opacity="0.7"/>
+  <!-- distant building 2 -->
+  <rect x="155" y="105" width="50" height="115" fill="#070c19"/>
+  <rect x="165" y="115" width="7" height="8" fill="#1a2a44" fill-opacity="0.5"/>
+  <rect x="179" y="115" width="7" height="8" fill="#1a2a44" fill-opacity="0.3"/>
+  <!-- distant building 3 -->
+  <rect x="300" y="120" width="55" height="100" fill="#080d1a"/>
+  <rect x="395" y="140" width="58" height="80" fill="#060b16"/>
+  <!-- fog layer -->
+  <rect width="512" height="288" fill="url(#fog)"/>
+  <!-- ground -->
+  <rect x="0" y="220" width="512" height="68" fill="#040810"/>
+  <!-- figure far away -->
+  <ellipse cx="256" cy="195" rx="6" ry="7" fill="#030609"/>
+  <rect x="250" y="202" width="12" height="22" fill="#030609"/>
+  <!-- vignette -->
+  <rect width="512" height="288" fill="url(#vig)"/>
+  <!-- letterbox -->
+  <rect width="512" height="20" fill="#000"/>
+  <rect y="268" width="512" height="20" fill="#000"/>
+  <!-- corner markers -->
+  <g stroke="#fff" stroke-width="1" stroke-opacity="0.22" fill="none">
+    <path d="M26 28 L26 21 L19 21"/>
+    <path d="M486 28 L486 21 L493 21"/>
+    <path d="M26 260 L26 267 L19 267"/>
+    <path d="M486 260 L486 267 L493 267"/>
+  </g>
+</svg>

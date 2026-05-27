@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 288">
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#080e18"/>
+      <stop offset="100%" stop-color="#101e2e"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0c1e30"/>
+      <stop offset="100%" stop-color="#060e18"/>
+    </linearGradient>
+    <radialGradient id="moon" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c8e0f8"/>
+      <stop offset="100%" stop-color="#8ab0d0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vig" cx="50%" cy="50%" r="70%">
+      <stop offset="40%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.75"/>
+    </radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="9"/></filter>
+  </defs>
+  <rect width="512" height="288" fill="url(#sky)"/>
+  <!-- moon -->
+  <circle cx="256" cy="68" r="30" fill="#8ab0d0" fill-opacity="0.2" filter="url(#glow)"/>
+  <circle cx="256" cy="68" r="14" fill="url(#moon)"/>
+  <!-- water reflection -->
+  <rect x="0" y="180" width="512" height="108" fill="url(#water)"/>
+  <!-- moon path on water -->
+  <ellipse cx="256" cy="225" rx="18" ry="55" fill="#8ab0d0" fill-opacity="0.08"/>
+  <!-- distant shore -->
+  <path d="M0 180 Q128 172 256 178 Q384 184 512 176 L512 180 L0 180 Z" fill="#0a1828"/>
+  <!-- small tree left -->
+  <rect x="88" y="145" width="4" height="36" fill="#060e18"/>
+  <ellipse cx="90" cy="138" rx="16" ry="22" fill="#080e1c"/>
+  <!-- small tree right -->
+  <rect x="408" y="148" width="4" height="33" fill="#060e18"/>
+  <ellipse cx="410" cy="142" rx="14" ry="18" fill="#080e1c"/>
+  <!-- stars -->
+  <circle cx="80"  cy="40"  r="1"   fill="#c8e0ff" fill-opacity="0.6"/>
+  <circle cx="150" cy="28"  r="0.8" fill="#c8e0ff" fill-opacity="0.5"/>
+  <circle cx="340" cy="35"  r="1"   fill="#c8e0ff" fill-opacity="0.7"/>
+  <circle cx="420" cy="50"  r="0.8" fill="#c8e0ff" fill-opacity="0.5"/>
+  <circle cx="180" cy="55"  r="0.7" fill="#c8e0ff" fill-opacity="0.4"/>
+  <circle cx="460" cy="25"  r="1"   fill="#c8e0ff" fill-opacity="0.6"/>
+  <!-- vignette -->
+  <rect width="512" height="288" fill="url(#vig)"/>
+  <!-- letterbox -->
+  <rect width="512" height="20" fill="#000"/>
+  <rect y="268" width="512" height="20" fill="#000"/>
+  <!-- corner markers -->
+  <g stroke="#fff" stroke-width="1" stroke-opacity="0.22" fill="none">
+    <path d="M26 28 L26 21 L19 21"/>
+    <path d="M486 28 L486 21 L493 21"/>
+    <path d="M26 260 L26 267 L19 267"/>
+    <path d="M486 260 L486 267 L493 267"/>
+  </g>
+</svg>

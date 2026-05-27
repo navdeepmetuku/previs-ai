@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 288">
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#080e18"/>
+      <stop offset="100%" stop-color="#0e1a28"/>
+    </linearGradient>
+    <linearGradient id="rain" x1="5%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3a5a7a" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#3a5a7a" stop-opacity="0.08"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d0e8ff" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#d0e8ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vig" cx="50%" cy="50%" r="70%">
+      <stop offset="40%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.88"/>
+    </radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="7"/></filter>
+  </defs>
+  <rect width="512" height="288" fill="url(#sky)"/>
+  <!-- wet pavement -->
+  <rect x="0" y="220" width="512" height="68" fill="#060d14"/>
+  <!-- pavement reflection of lamp -->
+  <ellipse cx="180" cy="252" rx="28" ry="8" fill="#a0c0e0" fill-opacity="0.12"/>
+  <!-- lamp post -->
+  <rect x="175" y="80" width="6" height="140" fill="#0a1420"/>
+  <path d="M181 80 Q206 70 210 90" stroke="#0a1420" stroke-width="5" fill="none"/>
+  <!-- lamp glow -->
+  <circle cx="210" cy="92" r="40" fill="url(#lamp)" filter="url(#glow)"/>
+  <circle cx="210" cy="92" r="8" fill="#e0f0ff" fill-opacity="0.8"/>
+  <!-- rain streaks -->
+  <rect width="512" height="288" fill="url(#rain)"/>
+  <line x1="100" y1="0"  x2="88"  y2="288" stroke="#4a6a88" stroke-width="0.5" stroke-opacity="0.12"/>
+  <line x1="200" y1="0"  x2="188" y2="288" stroke="#4a6a88" stroke-width="0.5" stroke-opacity="0.1"/>
+  <line x1="300" y1="0"  x2="288" y2="288" stroke="#4a6a88" stroke-width="0.5" stroke-opacity="0.13"/>
+  <line x1="400" y1="0"  x2="388" y2="288" stroke="#4a6a88" stroke-width="0.5" stroke-opacity="0.09"/>
+  <line x1="450" y1="0"  x2="438" y2="288" stroke="#4a6a88" stroke-width="0.5" stroke-opacity="0.11"/>
+  <line x1="50"  y1="0"  x2="38"  y2="288" stroke="#4a6a88" stroke-width="0.4" stroke-opacity="0.08"/>
+  <!-- lone figure under lamp, back to camera -->
+  <ellipse cx="256" cy="158" rx="10" ry="12" fill="#060c14"/>
+  <rect x="246" y="170" width="20" height="50" fill="#060c14"/>
+  <line x1="246" y1="183" x2="228" y2="200" stroke="#060c14" stroke-width="7" stroke-linecap="round"/>
+  <line x1="266" y1="183" x2="284" y2="200" stroke="#060c14" stroke-width="7" stroke-linecap="round"/>
+  <line x1="252" y1="220" x2="246" y2="262" stroke="#060c14" stroke-width="9" stroke-linecap="round"/>
+  <line x1="260" y1="220" x2="266" y2="262" stroke="#060c14" stroke-width="9" stroke-linecap="round"/>
+  <!-- puddle ripple -->
+  <ellipse cx="256" cy="268" rx="24" ry="5" fill="#3a5a78" fill-opacity="0.18"/>
+  <!-- vignette -->
+  <rect width="512" height="288" fill="url(#vig)"/>
+  <!-- letterbox -->
+  <rect width="512" height="20" fill="#000"/>
+  <rect y="268" width="512" height="20" fill="#000"/>
+  <!-- corner markers -->
+  <g stroke="#fff" stroke-width="1" stroke-opacity="0.22" fill="none">
+    <path d="M26 28 L26 21 L19 21"/>
+    <path d="M486 28 L486 21 L493 21"/>
+    <path d="M26 260 L26 267 L19 267"/>
+    <path d="M486 260 L486 267 L493 267"/>
+  </g>
+</svg>

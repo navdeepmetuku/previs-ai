@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 288">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#1a0d2e"/>
+      <stop offset="100%" stop-color="#04020a"/>
+    </radialGradient>
+    <linearGradient id="shaft" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#b07aff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#b07aff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="vig" cx="50%" cy="50%" r="70%">
+      <stop offset="40%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.9"/>
+    </radialGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <rect width="512" height="288" fill="url(#bg)"/>
+  <!-- light shafts -->
+  <polygon points="228,0 284,0 310,288 202,288" fill="url(#shaft)" filter="url(#blur)"/>
+  <polygon points="248,0 264,0 272,288 240,288" fill="#c8a0ff" fill-opacity="0.07"/>
+  <!-- floor -->
+  <rect x="0" y="220" width="512" height="68" fill="#03010a"/>
+  <!-- floor reflection -->
+  <polygon points="228,0 284,0 310,288 202,288" fill="#b07aff" fill-opacity="0.04" transform="scale(1,-1) translate(0,-288)"/>
+  <!-- figure silhouette -->
+  <ellipse cx="256" cy="118" rx="14" ry="16" fill="#02010a"/>
+  <path d="M242 134 L240 220 L272 220 L270 134 Z" fill="#02010a"/>
+  <line x1="242" y1="152" x2="218" y2="182" stroke="#02010a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="270" y1="152" x2="294" y2="182" stroke="#02010a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="248" y1="220" x2="242" y2="268" stroke="#02010a" stroke-width="10" stroke-linecap="round"/>
+  <line x1="264" y1="220" x2="270" y2="268" stroke="#02010a" stroke-width="10" stroke-linecap="round"/>
+  <!-- vignette -->
+  <rect width="512" height="288" fill="url(#vig)"/>
+  <!-- letterbox -->
+  <rect width="512" height="20" fill="#000"/>
+  <rect y="268" width="512" height="20" fill="#000"/>
+  <!-- corner markers -->
+  <g stroke="#fff" stroke-width="1" stroke-opacity="0.22" fill="none">
+    <path d="M26 28 L26 21 L19 21"/>
+    <path d="M486 28 L486 21 L493 21"/>
+    <path d="M26 260 L26 267 L19 267"/>
+    <path d="M486 260 L486 267 L493 267"/>
+  </g>
+</svg>
