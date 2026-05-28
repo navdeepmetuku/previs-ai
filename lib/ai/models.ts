@@ -3,7 +3,7 @@
  *
  * Update here to upgrade models across the entire application without
  * touching any other file. The provider-manager reads from this list
- * and tries them in priority order.
+ * and tries them in priority order based on the user-selected tier.
  *
  * Confirmed working against the current API key:
  *   gemini-flash-latest  — fast, reliable on free tier
@@ -20,16 +20,28 @@ export const GEMINI_MODELS = {
   SECONDARY: "gemini-2.0-flash",
   /** Lite — lowest token cost, use for high-frequency calls */
   LITE:      "gemini-2.0-flash-lite",
+  /** Pro — deeper reasoning, slower, lower free quota */
+  PRO:       "gemini-2.5-pro",
+  /** Pro fallback */
+  PRO_FALLBACK: "gemini-1.5-pro-latest",
 } as const;
 
 /**
- * Ordered list — provider-manager tries these in sequence.
- * Reorder to change the preference.
+ * Tier-keyed priority lists.
+ * Phase 14 — VISH tier system.
+ *   flash → fast, generous quota
+ *   pro   → deeper reasoning, lower quota
  */
-export const GEMINI_MODEL_PRIORITY: string[] = [
-  GEMINI_MODELS.PRIMARY,
-  GEMINI_MODELS.SECONDARY,
-];
+export const GEMINI_TIER_PRIORITY: Record<"flash" | "pro", string[]> = {
+  flash: [GEMINI_MODELS.PRIMARY, GEMINI_MODELS.SECONDARY, GEMINI_MODELS.LITE],
+  pro:   [GEMINI_MODELS.PRO, GEMINI_MODELS.PRO_FALLBACK, GEMINI_MODELS.SECONDARY, GEMINI_MODELS.PRIMARY],
+};
+
+/**
+ * Default ordered list — provider-manager tries these in sequence.
+ * Reorder to change the global preference.
+ */
+export const GEMINI_MODEL_PRIORITY: string[] = GEMINI_TIER_PRIORITY.flash;
 
 /** Maximum retries for a single transient (503) failure */
 export const GEMINI_MAX_RETRIES = 1;

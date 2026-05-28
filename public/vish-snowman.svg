@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- Transparent background — silhouette only -->
+
+  <!-- Scarf — back layer (navy, matches hat) -->
+  <path d="M 92 174 Q 128 180 164 178 L 224 196 Q 218 218 200 220 L 195 200 L 175 198 L 165 216 Q 145 220 125 218 L 92 215 Q 82 195 92 174 Z"
+        fill="#3a4a8a"/>
+
+  <!-- Scarf — front fold (deeper navy) -->
+  <path d="M 96 174 Q 128 178 162 178 Q 160 202 145 212 L 108 210 Q 92 196 96 174 Z"
+        fill="#2a3672"/>
+
+  <!-- Snowman head — soft white, slight off-center to match reference -->
+  <ellipse cx="128" cy="142" rx="56" ry="53" fill="#fafaff"/>
+
+  <!-- Subtle face shading for dimensional feel -->
+  <ellipse cx="128" cy="150" rx="46" ry="43" fill="#ffffff" opacity="0.55"/>
+
+  <!-- Eyes — slightly larger, shifted to feel friendly -->
+  <ellipse cx="110" cy="140" rx="5.5" ry="7" fill="#0c1027"/>
+  <ellipse cx="146" cy="140" rx="5.5" ry="7" fill="#0c1027"/>
+
+  <!-- Eye highlights -->
+  <circle cx="111.5" cy="137" r="1.6" fill="#ffffff"/>
+  <circle cx="147.5" cy="137" r="1.6" fill="#ffffff"/>
+
+  <!-- Eyebrows — gentle arched -->
+  <path d="M 100 124 Q 110 119 120 124" stroke="#0c1027" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  <path d="M 136 124 Q 146 119 156 124" stroke="#0c1027" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+
+  <!-- Mouth — gentle smile -->
+  <path d="M 116 160 Q 128 170 140 160" stroke="#0c1027" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+
+  <!-- Top hat — brim ellipse (deep navy) -->
+  <ellipse cx="128" cy="98" rx="60" ry="9" fill="#1a2349"/>
+
+  <!-- Top hat — body trapezoid -->
+  <path d="M 88 98 L 94 48 Q 95 41 102 41 L 154 41 Q 161 41 162 48 L 168 98 Z"
+        fill="#1a2349"/>
+
+  <!-- Hat top highlight (subtle) -->
+  <ellipse cx="128" cy="44" rx="29" ry="3" fill="#243366" opacity="0.6"/>
+
+  <!-- Gold band -->
+  <rect x="92" y="84" width="72" height="9" fill="#d4a843"/>
+  <rect x="92" y="84" width="72" height="2" fill="#e8bf5d"/>
+  <rect x="92" y="91" width="72" height="2" fill="#b08628"/>
+
+  <!-- Gold band buckle/center mark -->
+  <rect x="124" y="86" width="8" height="5" fill="#a07a1d" opacity="0.4"/>
+</svg>

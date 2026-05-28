@@ -9,6 +9,9 @@ import CinematicTimeline from "@/components/CinematicTimeline";
 import PresentationMode from "@/components/PresentationMode";
 import ShotListPanel from "@/components/ShotListPanel";
 import AiDirectorPanel from "@/components/AiDirectorPanel";
+import ModelSettingsPanel from "@/components/ModelSettingsPanel";
+import CloudSyncIndicator from "@/components/CloudSyncIndicator";
+import { ResetLayoutButton } from "@/components/DraggablePanel";
 
 interface Props {
   project: Project;
@@ -125,6 +128,15 @@ export default function StoryboardView({ project, onProjectUpdated }: Props) {
             <span className="text-[8px]">⬡</span> Space
           </Link>
 
+          {/* Phase 14 — Model tier picker */}
+          <ModelSettingsPanel projectId={project.id} compact />
+
+          {/* Cloud sync status — always visible, click to setup */}
+          <CloudSyncIndicator projectId={project.id} />
+
+          {/* Phase 16 — Reset draggable panels */}
+          <ResetLayoutButton />
+
           {/* View toggle */}
           <div className="flex items-center gap-1 rounded-lg border border-white/8 p-0.5">
             <ViewBtn active={view === "storyboard"} onClick={() => setView("storyboard")} label="Storyboard" />
@@ -214,6 +226,7 @@ export default function StoryboardView({ project, onProjectUpdated }: Props) {
                         scene={scene}
                         isSelected={selectedScene?.id === scene.id}
                         loadDelay={idx * 8000}
+                        projectId={project.id}
                         onClick={() =>
                           setSelectedScene(selectedScene?.id === scene.id ? null : scene)
                         }
@@ -228,6 +241,7 @@ export default function StoryboardView({ project, onProjectUpdated }: Props) {
                           scene={scene}
                           isSelected={selectedScene?.id === scene.id}
                           loadDelay={idx * 8000}
+                          projectId={project.id}
                           onClick={() =>
                             setSelectedScene(selectedScene?.id === scene.id ? null : scene)
                           }
@@ -250,6 +264,7 @@ export default function StoryboardView({ project, onProjectUpdated }: Props) {
                   ) : selectedScene ? (
                     <SceneDetail
                       scene={selectedScene}
+                      project={project}
                       onUpdate={handleSceneUpdate}
                       onClose={() => setSelectedScene(null)}
                     />
@@ -346,6 +361,7 @@ export default function StoryboardView({ project, onProjectUpdated }: Props) {
                   ) : selectedScene ? (
                     <SceneDetail
                       scene={selectedScene}
+                      project={project}
                       onUpdate={handleSceneUpdate}
                       onClose={() => setSelectedScene(null)}
                     />
@@ -404,3 +420,4 @@ function moodColor(mood: string): string {
   };
   return m[mood] ?? "text-white/65";
 }
+

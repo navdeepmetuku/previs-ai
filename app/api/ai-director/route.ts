@@ -19,18 +19,21 @@ export async function POST(request: Request) {
       messages?:      DirectorMessage[];
       selectedScene?: Scene | null;
       memoryContext?: string;
+      tier?:          "flash" | "pro";
       memory?:        Pick<DirectorMemory,
         "dominantLighting" | "dominantMoods" | "dominantShotTypes" |
         "dominantLens" | "dominantMovement" | "locationVariety" | "moodVariety"
       >;
     };
 
+    const tier: "flash" | "pro" = body.tier === "pro" ? "pro" : "flash";
+
     switch (body.action) {
 
       case "analyze-scene": {
         if (!body.scene) return Response.json({ error: "scene is required" }, { status: 400 });
         try {
-          const insight = await analyzeScene(body.scene, body.project?.storyMemory, body.memoryContext);
+          const insight = await analyzeScene(body.scene, body.project?.storyMemory, body.memoryContext, tier);
           return Response.json({ insight });
         } catch (err) {
           if (err instanceof AiError && (err.kind === "quota" || err.kind === "auth")) {
@@ -48,7 +51,7 @@ export async function POST(request: Request) {
           return Response.json({ error: "scenes and project are required" }, { status: 400 });
         }
         try {
-          const insight = await analyzeSequence(body.scenes, body.project, body.memoryContext);
+          const insight = await analyzeSequence(body.scenes, body.project, body.memoryContext, tier);
           return Response.json({ insight });
         } catch (err) {
           if (err instanceof AiError && (err.kind === "quota" || err.kind === "auth")) {
@@ -67,7 +70,7 @@ export async function POST(request: Request) {
         }
         const lastUserMsg = [...body.messages].reverse().find(m => m.role === "user");
         try {
-          const reply = await directorChat(body.messages, body.project, body.selectedScene, body.memoryContext);
+          const reply = await directorChat(body.messages, body.project, body.selectedScene, body.memoryContext, tier);
           return Response.json({ reply });
         } catch (err) {
           if (err instanceof AiError && (err.kind === "quota" || err.kind === "auth")) {
@@ -86,7 +89,7 @@ export async function POST(request: Request) {
           return Response.json({ error: "memory and project are required" }, { status: 400 });
         }
         try {
-          const result = await generateTendencies(body.memory, body.project);
+          const result = await generateTendencies(body.memory, body.project, tier);
           return Response.json(result);
         } catch (err) {
           if (err instanceof AiError && (err.kind === "quota" || err.kind === "auth")) {

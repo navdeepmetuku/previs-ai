@@ -18,7 +18,7 @@
  *     - After lerp converges, controls delta is near zero → OrbitControls has full authority
  */
 
-import { useRef, useCallback, useState, useEffect, Component } from "react";
+import { useRef, useCallback, useState, useEffect, useMemo, Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
@@ -130,7 +130,13 @@ function WorkspaceScene({ scenes, selectedId, onSelect, onDelete, controlsRef }:
   const positions = computeCardPositions(safe.length);
   const selIdx    = safe.findIndex(s => s.id === selectedId);
   const selPos    = selIdx >= 0 ? positions[selIdx] : null;
-  const targetVec = selPos ? new THREE.Vector3(...selPos) : null;
+
+  // Memoize to avoid new THREE.Vector3 allocation on every render
+  const targetVec = useMemo(
+    () => selPos ? new THREE.Vector3(...selPos) : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selPos?.[0], selPos?.[1], selPos?.[2]],
+  );
 
   return (
     <>
@@ -154,7 +160,7 @@ function WorkspaceScene({ scenes, selectedId, onSelect, onDelete, controlsRef }:
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export default function Workspace({ project }: { project: Project }) {
+export default function Workspace({ project, onProjectUpdated }: { project: Project; onProjectUpdated?: (p: Project) => void }) {
   const [scenes,     setScenes]     = useState<Scene[]>(() => project.scenes ?? []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
@@ -192,32 +198,39 @@ export default function Workspace({ project }: { project: Project }) {
     });
   }, [project]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Initial selection (only once)
-  useEffect(() => {
-    setSelectedId(project.scenes?.[0]?.id ?? null);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Remove redundant Effect 2 — Effect 1 (project sync) already handles initial selection
 
   const handleSelect = useCallback((id: string) => {
     setSelectedId(prev => (prev === id ? null : id));
   }, []);
 
   const handleDelete = useCallback((id: string) => {
-    setScenes(prev => prev.filter(s => s.id !== id));
-    setSelectedId(prev => {
-      if (prev !== id) return prev;
-      const safe = scenes ?? [];
-      const idx  = safe.findIndex(s => s.id === id);
-      const next = safe.filter(s => s.id !== id);
-      return next[Math.min(idx, next.length - 1)]?.id ?? null;
+    // Use a single functional updater to avoid stale closure over `scenes`
+    setScenes(prev => {
+      const next = prev.filter(s => s.id !== id);
+      // Derive new selection inside the same batch
+      setSelectedId(sel => {
+        if (sel !== id) return sel;
+        const idx = prev.findIndex(s => s.id === id);
+        return next[Math.min(idx, next.length - 1)]?.id ?? null;
+      });
+      return next;
     });
-  }, [scenes]);
+  }, []);
 
   // ── Generation queue — background continuity-aware frame generation ──────
   const { enqueue, statuses: genStatuses, isRunning: genRunning, cancel: cancelGen, pending: genPending } =
     useGenerationQueue({
       project,
       onFrameReady: (sceneId, dataUrl) => {
-        setScenes(prev => prev.map(s => s.id === sceneId ? { ...s, imageUrl: dataUrl } : s));
+        setScenes(prev => {
+          const next = prev.map(s => s.id === sceneId ? { ...s, imageUrl: dataUrl } : s);
+          // Persist to localStorage so images survive navigation/refresh
+          if (onProjectUpdated) {
+            onProjectUpdated({ ...project, scenes: next });
+          }
+          return next;
+        });
       },
     });
 
@@ -300,7 +313,7 @@ export default function Workspace({ project }: { project: Project }) {
       )}
 
       {/* ── Top-right toolbar ── */}
-      <div className="absolute top-3 z-20 flex flex-col items-end gap-1.5" style={{ right: 286 }}>
+      <div className="absolute top-3 z-20 flex flex-col items-end gap-1.5" style={{ right: 12 }}>
         {/* Identity row */}
         <div className="flex items-center gap-1.5 pointer-events-none">
           <span className="text-[7px] font-mono uppercase tracking-[0.3em]"

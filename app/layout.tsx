@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import VishBubble from "@/components/VishBubble";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,6 +61,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col film-grain bg-[#060608]">
         {children}
+        {/* Phase 15 — VISH floating bubble: visible on every page */}
+        <VishBubble />
       </body>
     </html>
   );

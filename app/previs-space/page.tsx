@@ -12,6 +12,10 @@ import Link from "next/link";
 import type { Project, Scene } from "@/types";
 import { getProjects, getLastOpenedId } from "@/lib/storage";
 import ReviewMode from "@/components/PrevisSpace/ReviewMode";
+import { useHydrateProject } from "@/lib/supabase/useImageStore";
+import { preload as preloadImages } from "@/lib/supabase/image-store";
+import ModelSettingsPanel from "@/components/ModelSettingsPanel";
+import { ResetLayoutButton } from "@/components/DraggablePanel";
 
 const Workspace = dynamic(
   () => import("@/components/PrevisSpace/Workspace"),
@@ -26,6 +30,9 @@ export default function PrevisSpacePage() {
   const [reviewOpen,     setReviewOpen]     = useState(false);
   const [reviewScenes,   setReviewScenes]   = useState<Scene[]>([]);
 
+  // Phase 13 — hydrate active project's images from Supabase
+  useHydrateProject(project?.id);
+
   useEffect(() => {
     setMounted(true);
 
@@ -34,6 +41,8 @@ export default function PrevisSpacePage() {
       const all    = getProjects();
       const lastId = getLastOpenedId();
       setProjects(all);
+      // Phase 13 — preload all known images into the store
+      all.forEach(p => preloadImages(p.scenes, p.id));
       if (all.length > 0) {
         const proj = lastId ? (all.find(p => p.id === lastId) ?? all[0]) : all[0];
         setProject(proj ?? null);
@@ -56,10 +65,10 @@ export default function PrevisSpacePage() {
     };
   }, []);
 
-  // Keep reviewScenes in sync when project changes via the switcher
+  // Keep reviewScenes in sync whenever project or its scenes change
   useEffect(() => {
     setReviewScenes(project?.scenes ?? []);
-  }, [project?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [project]);
 
   if (!mounted) return null;
 
@@ -149,6 +158,12 @@ export default function PrevisSpacePage() {
             </button>
           )}
 
+          {/* Phase 14 — Model tier picker */}
+          {project && <ModelSettingsPanel projectId={project.id} compact />}
+
+          {/* Phase 16 — Reset draggable panels */}
+          <ResetLayoutButton />
+
           <Link href="/studio"
             className="flex items-center gap-1.5 text-[9px] font-mono text-white/30 hover:text-white/65 border border-white/8 hover:border-white/20 rounded-md px-2.5 py-1 transition-all">
             ← Studio
@@ -188,7 +203,7 @@ export default function PrevisSpacePage() {
 
       {/* ── Workspace ── */}
       <div className="flex-1 relative overflow-hidden">
-        {!project ? <NoProject /> : <Workspace project={project} />}
+        {!project ? <NoProject /> : <Workspace project={project} onProjectUpdated={p => { setProject(p); setReviewScenes(p.scenes); }} />}
       </div>
     </div>
   );

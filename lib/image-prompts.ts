@@ -61,6 +61,15 @@ function focalLengthNote(mm: number | null | undefined): string {
   return           `${mm}mm long telephoto, extreme background compression, subject extracted from environment`;
 }
 
+// ── Camera height enrichment ──────────────────────────────────────────────────
+
+const CAMERA_HEIGHT_MAP: Record<string, string> = {
+  "eye-level": "eye-level camera, natural human perspective, neutral power dynamic",
+  "low":       "low-angle camera, subject looms large, empowering or threatening",
+  "high":      "high-angle camera, subject diminished, vulnerable or observed",
+  "overhead":  "overhead top-down camera, god's-eye view, subject exposed",
+};
+
 // ── Lens type enrichment ───────────────────────────────────────────────────────
 
 const LENS_TYPE_MAP: Record<string, string> = {
@@ -198,7 +207,7 @@ export interface ContinuityContext {
 // ── Main prompt builder ───────────────────────────────────────────────────────
 
 export function buildCinematicPrompt(
-  scene:         ScenePromptInput & { cinematicMeta?: { focalLengthMm?: number | null; lensType?: string | null; cameraMovement?: string | null }; lighting: string },
+  scene:         ScenePromptInput & { cinematicMeta?: { focalLengthMm?: number | null; lensType?: string | null; cameraMovement?: string | null; cameraHeight?: string | null }; lighting: string },
   storyMemory?:  StoryVisualMemory | null,
   continuity?:   ContinuityContext | null,
 ): string {
@@ -216,13 +225,24 @@ export function buildCinematicPrompt(
   const desc        = enhanceDescription(scene.description, scene.mood, scene.location);
   const loc         = sanitize(scene.location.slice(0, 70));
 
-  // ── Cinematic meta: focal length, lens type, movement ────────────────────
+  // ── Cinematic meta: focal length, lens type, movement, height ────────────
   const focalNote   = focalLengthNote(scene.cinematicMeta?.focalLengthMm);
   const lensNote    = scene.cinematicMeta?.lensType
     ? LENS_TYPE_MAP[scene.cinematicMeta.lensType] ?? ""
     : "";
   const movNote     = scene.cinematicMeta?.cameraMovement
     ? MOVEMENT_MAP[scene.cinematicMeta.cameraMovement] ?? ""
+    : "";
+  const heightNote  = scene.cinematicMeta?.cameraHeight
+    ? CAMERA_HEIGHT_MAP[scene.cinematicMeta.cameraHeight] ?? ""
+    : "";
+
+  // ── FilmDNA: contrast profile from dominant mood ──────────────────────────
+  const contrastNote = storyMemory?.contrastProfile
+    ? storyMemory.contrastProfile === "high"   ? "high contrast ratio, deep shadow separation"
+    : storyMemory.contrastProfile === "low"    ? "low contrast, soft shadow gradation"
+    : storyMemory.contrastProfile === "flat"   ? "flat exposure, minimal shadow contrast"
+    : ""
     : "";
 
   // ── Atmosphere enrichment ────────────────────────────────────────────────
@@ -234,15 +254,55 @@ export function buildCinematicPrompt(
     .slice(0, 2)
     .join(", ");
 
-  // ── Shot relationship note (subtle continuity) ────────────────────────────
+  // ── Shot relationship note — complete progression map ────────────────────
   let prevShotNote = "";
   if (scene.prevShotType && scene.prevShotType !== scene.shotType) {
-    // Wide → Medium = "moving in from establishing view"
-    // Medium → Close = "pushing closer into emotional territory"
     const shotProgression: Record<string, Record<string, string>> = {
-      "Wide Shot":         { "Medium Shot": "pushing in from wider view, spatial context established" },
-      "Extreme Wide Shot": { "Wide Shot": "tightening from epic establish", "Medium Shot": "cutting in to human scale" },
-      "Medium Shot":       { "Close-Up": "pushing into emotional close-up", "Over-the-Shoulder": "cutting to reverse perspective" },
+      "Extreme Wide Shot": {
+        "Wide Shot":          "tightening from epic establish, scale reducing",
+        "Medium Shot":        "cutting in to human scale from vast environment",
+        "Close-Up":           "dramatic cut from epic wide to intimate close",
+        "Aerial Shot":        "descending from aerial to ground level",
+      },
+      "Wide Shot": {
+        "Medium Shot":        "pushing in from wider view, spatial context established",
+        "Close-Up":           "cutting in to emotional territory, environment receding",
+        "Over-the-Shoulder":  "moving into conversation coverage from wide",
+        "Extreme Wide Shot":  "pulling back to reveal full environment",
+      },
+      "Medium Shot": {
+        "Close-Up":           "pushing into emotional close-up, intimacy increasing",
+        "Extreme Close-Up":   "extreme push into detail, maximum emotional intensity",
+        "Over-the-Shoulder":  "cutting to reverse perspective, dialogue coverage",
+        "Wide Shot":          "pulling back to re-establish spatial context",
+        "POV Shot":           "cutting to character's point of view",
+      },
+      "Close-Up": {
+        "Extreme Close-Up":   "pushing deeper into detail, maximum intensity",
+        "Medium Shot":        "pulling back to release emotional pressure",
+        "Wide Shot":          "cutting wide for spatial relief after intimacy",
+        "Over-the-Shoulder":  "cutting to reverse, maintaining intimacy",
+        "POV Shot":           "cutting to what the character sees",
+      },
+      "Over-the-Shoulder": {
+        "Close-Up":           "pushing past shoulder into direct close-up",
+        "Medium Shot":        "widening from OTS to include both subjects",
+        "POV Shot":           "cutting to pure POV, removing the shoulder anchor",
+      },
+      "POV Shot": {
+        "Close-Up":           "cutting from POV to reaction close-up",
+        "Medium Shot":        "cutting from POV to medium reaction shot",
+        "Over-the-Shoulder":  "returning from POV to anchored OTS",
+      },
+      "Dutch Angle": {
+        "Medium Shot":        "returning to stable framing after disorientation",
+        "Close-Up":           "maintaining psychological tension in close-up",
+      },
+      "Aerial Shot": {
+        "Wide Shot":          "descending from aerial to ground-level wide",
+        "Extreme Wide Shot":  "pulling back further from aerial to extreme wide",
+        "Medium Shot":        "dramatic cut from aerial to human-scale medium",
+      },
     };
     prevShotNote = shotProgression[scene.prevShotType]?.[scene.shotType] ?? "";
   }
@@ -261,12 +321,14 @@ export function buildCinematicPrompt(
     shot,
     focalNote,
     lensNote,
+    heightNote,
     // 5. Movement
     movNote,
     // 6. Lighting
     light,
-    // 7. Colour grade
+    // 7. Colour grade + FilmDNA contrast
     grade,
+    contrastNote,
     // 8. Atmosphere
     atmosBase ? sanitize(atmosBase) : "",
     atmosEnhanced,
@@ -301,7 +363,7 @@ export function buildFullPrompt(
   scene:    Scene,
   project:  Pick<Project, "genre" | "storyMemory" | "visualContext">,
   context?: {
-    allScenes?:  Scene[];  // for shot relationship awareness
+    allScenes?:  Scene[];
     sceneIndex?: number;
   },
 ): string {
@@ -309,8 +371,7 @@ export function buildFullPrompt(
     ? buildSceneContinuityPrompt(scene, project.visualContext as ProjectVisualContext)
     : null;
 
-  // Shot relationship context from adjacent scene
-  const prevScene  = context?.allScenes && context.sceneIndex != null && context.sceneIndex > 0
+  const prevScene = context?.allScenes && context.sceneIndex != null && context.sceneIndex > 0
     ? context.allScenes[context.sceneIndex - 1]
     : null;
 

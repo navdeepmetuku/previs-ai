@@ -39,10 +39,24 @@ export interface CharacterVisual {
 // ── Appearance token → visual language ───────────────────────────────────────
 // Maps parser tokens (lowercase) to FLUX-friendly descriptive phrases.
 
+// Gender-aware age phrase builder
+function agePhrase(token: string, gender: "male" | "female" | "neutral" | "unknown"): string {
+  const pronoun = gender === "female" ? "her" : gender === "neutral" ? "their" : "his";
+  const map: Record<string, string> = {
+    "20s": `in ${pronoun} twenties`, "30s": `in ${pronoun} thirties`,
+    "40s": `in ${pronoun} forties`,  "50s": `in ${pronoun} fifties`,
+    "twenties": `in ${pronoun} twenties`, "thirties": `in ${pronoun} thirties`,
+    "forties":  `in ${pronoun} forties`,  "fifties":  `in ${pronoun} fifties`,
+    "young": "young adult", "old": "older", "middle-aged": "middle-aged",
+  };
+  return map[token] ?? token;
+}
+
+// Keep a static map for non-pronoun lookups (build, clothing, emotion)
 const AGE_MAP: Record<string, string> = {
-  "20s": "in his twenties", "30s": "in his thirties", "40s": "in his forties",
-  "50s": "in his fifties", "twenties": "in his twenties", "thirties": "in his thirties",
-  "forties": "in his forties", "fifties": "in his fifties",
+  "20s": "in their twenties", "30s": "in their thirties", "40s": "in their forties",
+  "50s": "in their fifties", "twenties": "in their twenties", "thirties": "in their thirties",
+  "forties": "in their forties", "fifties": "in their fifties",
   "young": "young adult", "old": "older", "middle-aged": "middle-aged",
 };
 
@@ -65,13 +79,13 @@ const CLOTHING_MAP: Record<string, string> = {
   "t-shirt": "wearing a t-shirt", "dressed": "formally dressed",
 };
 
-function buildDescriptor(hint: { name: string; rawTokens: string[]; sceneCount: number }): string {
+function buildDescriptor(hint: { name: string; rawTokens: string[]; sceneCount: number; gender: "male" | "female" | "neutral" | "unknown" }): string {
   const tokens = hint.rawTokens;
   const parts: string[] = [];
 
-  // Age
-  for (const [k, v] of Object.entries(AGE_MAP)) {
-    if (tokens.includes(k)) { parts.push(v); break; }
+  // Age — use gender-aware pronoun
+  for (const k of Object.keys(AGE_MAP)) {
+    if (tokens.includes(k)) { parts.push(agePhrase(k, hint.gender)); break; }
   }
 
   // Build / physique
@@ -109,7 +123,7 @@ function buildDescriptor(hint: { name: string; rawTokens: string[]; sceneCount: 
  */
 export function buildCharacterMemory(hints: CharacterHint[]): CharacterVisual[] {
   return hints.map(hint => {
-    const descriptor = buildDescriptor({ name: hint.name, rawTokens: hint.rawHints, sceneCount: hint.sceneCount });
+    const descriptor = buildDescriptor({ name: hint.name, rawTokens: hint.rawHints, sceneCount: hint.sceneCount, gender: hint.gender ?? "unknown" });
 
     console.log(`[CharacterMemory] ${hint.name} (${hint.sceneCount} scenes): "${descriptor}"`);
 

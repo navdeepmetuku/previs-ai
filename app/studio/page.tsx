@@ -9,6 +9,9 @@ import {
 } from "@/lib/storage";
 import StoryboardView from "@/components/StoryboardView";
 import ScriptInput from "@/components/ScriptInput";
+import { useHydrateProject } from "@/lib/supabase/useImageStore";
+import { preload as preloadImages } from "@/lib/supabase/image-store";
+import CloudSyncIndicator from "@/components/CloudSyncIndicator";
 
 type View = "dashboard" | "new-project" | "storyboard";
 
@@ -39,10 +42,16 @@ export default function StudioPage() {
   const [saveStatus,    setSaveStatus]    = useState<"saved" | "saving" | "">("");
   const cancelAutoSave  = useRef<(() => void) | null>(null);
 
+  // Phase 13 — hydrate active project's images from Supabase
+  useHydrateProject(activeProject?.id);
+
   // Load projects and resume last-opened session
   useEffect(() => {
     const all       = getProjects();
     setProjects(all);
+    // Phase 13 — preload all known images into store immediately
+    all.forEach(p => preloadImages(p.scenes, p.id));
+
     const lastId    = getLastOpenedId();
     if (lastId) {
       const last = all.find(p => p.id === lastId);
@@ -138,6 +147,8 @@ export default function StudioPage() {
               ← Projects
             </button>
           )}
+          {/* Cloud sync — always visible in nav */}
+          <CloudSyncIndicator projectId={activeProject?.id} />
           {view === "dashboard" && (
             <button onClick={() => setView("new-project")}
               className="text-xs px-4 py-2 rounded-full bg-amber-400 text-black font-semibold hover:bg-amber-300 transition-colors">
@@ -386,7 +397,7 @@ function Dashboard({
       ) : projects.length === 0 ? (
         <EmptyState onNew={onNew} />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
           {filtered.map(project => (
             <ProjectCard
               key={project.id}
@@ -398,7 +409,7 @@ function Dashboard({
           ))}
           {!query && !filterMood && (
             <button onClick={onNew}
-              className="group flex flex-col items-center justify-center rounded-xl border border-dashed border-white/8 p-8 text-white/20 hover:border-amber-400/25 hover:text-amber-400/40 transition-all min-h-[220px]">
+              className="group flex flex-col items-center justify-center rounded-xl border border-dashed border-white/8 p-8 text-white/20 hover:border-amber-400/25 hover:text-amber-400/40 transition-all min-h-[280px]">
               <span className="text-3xl mb-2 leading-none">+</span>
               <span className="text-[10px] font-mono uppercase tracking-widest">New Project</span>
             </button>
@@ -435,26 +446,35 @@ function ProjectCard({
   const topShot = Object.entries(shotCounts).sort((a,b) => b[1]-a[1])[0];
 
   return (
-    <div className="group relative rounded-xl overflow-hidden transition-all duration-200 hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+    <div className="group relative rounded-xl overflow-hidden transition-all duration-200 hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] flex flex-col"
       style={{ background:"rgba(10,10,18,0.96)", border:"1px solid rgba(255,255,255,0.07)" }}>
 
       {/* Mood palette bar — top edge */}
-      <div className="h-0.5 flex">
+      <div className="h-0.5 flex shrink-0">
         {moodPalette.map((color, i) => (
           <div key={i} className="flex-1" style={{ background: color, opacity: 0.7 }} />
         ))}
       </div>
 
-      {/* Filmstrip */}
-      <div className="relative h-36 bg-black cursor-pointer overflow-hidden" onClick={onOpen}>
+      {/* Filmstrip — fixed 16:9 aspect, never collapses */}
+      <div
+        className="relative bg-black cursor-pointer overflow-hidden shrink-0"
+        style={{ aspectRatio: "16 / 9" }}
+        onClick={onOpen}
+      >
         {thumbScenes.length > 0 ? (
           <div className="grid h-full gap-px" style={{ gridTemplateColumns:`repeat(${thumbScenes.length}, 1fr)` }}>
             {thumbScenes.map(scene => (
               <div key={scene.id} className="relative overflow-hidden bg-zinc-950">
                 {scene.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={scene.imageUrl} alt={scene.title}
-                    className="w-full h-full object-cover opacity-70 group-hover:opacity-85 transition-opacity" loading="lazy" />
+                  <img
+                    src={scene.imageUrl}
+                    alt={scene.title}
+                    className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity"
+                    loading="lazy"
+                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
                 ) : (
                   <div className="w-full h-full" style={{
                     background:`radial-gradient(ellipse at 40% 35%, ${MOOD_COLORS[scene.mood] ?? "#222"}44 0%, #0a0a12 100%)`
@@ -471,37 +491,33 @@ function ProjectCard({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent pointer-events-none" />
 
-        {/* Genre + status */}
-        <div className="absolute top-2 left-2 flex items-center gap-1.5">
-          <span className="text-[6.5px] font-mono uppercase tracking-widest text-white/40 bg-black/65 px-1.5 py-0.5 rounded-sm">
+        {/* Genre + status — top-left, single row */}
+        <div className="absolute top-2 left-2 right-2 flex items-center gap-1.5 min-w-0">
+          <span className="text-[6.5px] font-mono uppercase tracking-widest text-white/55 bg-black/70 px-1.5 py-0.5 rounded-sm flex-shrink-0">
             {project.genre}
           </span>
           {tag && (
-            <span className={`text-[6.5px] font-mono uppercase tracking-widest border px-1.5 py-0.5 rounded-sm ${tagCls}`}>
+            <span className={`text-[6.5px] font-mono uppercase tracking-widest border px-1.5 py-0.5 rounded-sm flex-shrink-0 ${tagCls}`}>
               {tag}
             </span>
           )}
         </div>
 
-        {/* Scene count bottom-left */}
-        <div className="absolute bottom-2 left-2">
-          <span className="text-[8px] font-mono text-white/40">
+        {/* Scene count + top shot — bottom corners */}
+        <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-2">
+          <span className="text-[8px] font-mono text-white/55 truncate">
             {project.scenes.length} shots · {runtime}
           </span>
-        </div>
-
-        {/* Top shot type bottom-right */}
-        {topShot && (
-          <div className="absolute bottom-2 right-2">
-            <span className="text-[7px] font-mono text-white/25">
+          {topShot && (
+            <span className="text-[7px] font-mono text-white/35 flex-shrink-0">
               {topShot[0].split(" ").map(w=>w[0]).join("")} ×{topShot[1]}
             </span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Pipeline progress */}
-      <div className="px-3 pt-2.5">
+      {/* Pipeline progress — fixed height */}
+      <div className="px-3 pt-3 shrink-0">
         <div className="flex items-center gap-0">
           {PIPELINE_STAGES.map((stage, i) => {
             const done    = i < pipeStage;
@@ -520,7 +536,7 @@ function ProjectCard({
                     }}
                   />
                   <span className={`text-[5.5px] font-mono mt-1 uppercase tracking-wider ${
-                    done ? "text-amber-400/50" : current ? "text-amber-400/80" : "text-white/15"
+                    done ? "text-amber-400/55" : current ? "text-amber-400/85" : "text-white/20"
                   }`}>
                     {stage}
                   </span>
@@ -535,30 +551,30 @@ function ProjectCard({
         </div>
       </div>
 
-      {/* Info + actions */}
-      <div className="px-3 py-2.5 flex items-center justify-between">
+      {/* Info + actions — flex-1 fills remaining space, consistent height */}
+      <div className="px-3 py-2.5 flex items-center justify-between gap-2 mt-auto">
         <button onClick={onOpen} className="min-w-0 flex-1 text-left">
-          <h3 className="text-[11px] font-semibold text-white/88 truncate leading-tight">{project.title}</h3>
-          <p className="text-[7.5px] font-mono text-white/22 mt-0.5">
+          <h3 className="text-[12px] font-semibold text-white/90 truncate leading-tight">{project.title}</h3>
+          <p className="text-[8px] font-mono text-white/30 mt-0.5 truncate">
             {updDate}
             {project.storyMemory && (
-              <span className="ml-1.5 text-amber-400/22">
-                {project.storyMemory.filmStyle.split(",")[0]}
+              <span className="ml-1.5 text-amber-400/30">
+                · {project.storyMemory.filmStyle.split(",")[0]}
               </span>
             )}
           </p>
         </button>
 
         {/* Context menu */}
-        <div className="relative shrink-0 ml-2">
+        <div className="relative shrink-0">
           <button
             onClick={e => { e.stopPropagation(); setMenuOpen(m => !m); }}
             onBlur={() => setTimeout(() => setMenuOpen(false), 150)}
-            className="h-6 w-6 rounded flex items-center justify-center text-white/18 hover:text-white/55 hover:bg-white/8 transition-all text-[10px]">
+            className="h-7 w-7 rounded flex items-center justify-center text-white/25 hover:text-white/65 hover:bg-white/8 transition-all text-[12px]">
             ···
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-7 z-50 w-36 rounded-lg border border-white/10 bg-[#0e0e18] shadow-xl overflow-hidden">
+            <div className="absolute right-0 top-8 z-50 w-36 rounded-lg border border-white/10 bg-[#0e0e18] shadow-xl overflow-hidden">
               <CtxBtn onClick={onOpen}       label="Open" />
               <CtxBtn onClick={onDuplicate}  label="Duplicate" />
               <CtxBtn onClick={onDelete}     label="Delete" destructive />

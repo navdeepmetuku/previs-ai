@@ -84,20 +84,26 @@ function clearLastOpenedId(): void {
 
 // ── Debounced auto-save ──────────────────────────────────────────────────────
 // Returns a disposer function to cancel any pending save.
-// Typical usage:
-//   const cancel = autoSave(project);
-//   return cancel; // in useEffect cleanup
+// Uses a WeakMap-keyed approach to avoid cross-instance timer cancellation.
+// Each call site gets its own timer slot keyed by a stable symbol.
 
-let _autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
+const _timers = new Map<symbol, ReturnType<typeof setTimeout>>();
 
-export function autoSave(project: Project, delayMs = 1500): () => void {
-  if (_autoSaveTimer) clearTimeout(_autoSaveTimer);
-  _autoSaveTimer = setTimeout(() => {
+export function autoSave(project: Project, delayMs = 1500, key?: symbol): () => void {
+  const slot = key ?? Symbol("autoSave");
+  const existing = _timers.get(slot);
+  if (existing) clearTimeout(existing);
+
+  const id = setTimeout(() => {
     saveProject(project);
-    _autoSaveTimer = null;
+    _timers.delete(slot);
   }, delayMs);
+
+  _timers.set(slot, id);
+
   return () => {
-    if (_autoSaveTimer) { clearTimeout(_autoSaveTimer); _autoSaveTimer = null; }
+    clearTimeout(id);
+    _timers.delete(slot);
   };
 }
 

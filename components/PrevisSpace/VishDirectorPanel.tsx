@@ -21,6 +21,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { Scene, Project, SceneInsight, SequenceInsight, DirectorMessage } from "@/types";
+import { useFreeDrag, onPanelsReset } from "@/hooks/useFreeDrag";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -189,6 +190,20 @@ export default function VishDirectorPanel({ project, scenes, selectedScene, onGe
   // Local pattern analysis (instant, no API)
   const localAnalysis = runLocalAnalysis(scenes);
 
+  // ── Free drag ──────────────────────────────────────────────────────────────
+  const drag = useFreeDrag({
+    panelId:  "vish-director-panel",
+    defaultX: 10,
+    defaultY: 10,
+    anchor:   "top-right",
+    width:    270,
+    height:   600,
+    safetyPx: 24,
+  });
+
+  // Reset Layout support
+  useEffect(() => onPanelsReset(drag.reset), [drag.reset]);
+
   // Scroll chat to bottom on new message
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -266,27 +281,32 @@ export default function VishDirectorPanel({ project, scenes, selectedScene, onGe
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{
-      position:       "absolute",
-      top:            10,
-      right:          10,
-      bottom:         106,
-      width:          collapsed ? 36 : 270,
-      zIndex:         30,
-      display:        "flex",
-      flexDirection:  "column",
-      background:     collapsed ? "transparent" : "rgba(12,12,20,0.97)",
-      border:         collapsed ? "none" : "1px solid rgba(255,255,255,0.09)",
-      borderRadius:   6,
-      backdropFilter: "blur(16px)",
-      boxShadow:      collapsed ? "none" : "0 4px 32px rgba(0,0,0,0.50)",
-      transition:     "width 0.2s ease",
-      overflow:       "hidden",
-      fontFamily:     "monospace",
-    }}>
+    <div
+      ref={drag.panelRef}
+      onClick={drag.focus}
+      style={{
+        position:       "fixed",
+        left:           drag.initialX,
+        top:            drag.initialY,
+        width:          collapsed ? 36 : 270,
+        zIndex:         drag.zIndex,
+        display:        "flex",
+        flexDirection:  "column",
+        background:     collapsed ? "transparent" : "rgba(12,12,20,0.97)",
+        border:         collapsed ? "none" : "1px solid rgba(255,255,255,0.09)",
+        borderRadius:   6,
+        backdropFilter: "blur(16px)",
+        boxShadow:      collapsed ? "none" : "0 4px 32px rgba(0,0,0,0.50)",
+        transition:     "width 0.2s ease",
+        overflow:       "hidden",
+        fontFamily:     "monospace",
+        // Height: collapsed = auto, expanded = fill down to timeline (calc from viewport)
+        maxHeight:      collapsed ? "auto" : "calc(100vh - 120px)",
+      }}>
 
-      {/* ── Collapse toggle ── */}
+      {/* ── Collapse toggle (also the drag handle when collapsed) ── */}
       <button
+        {...(collapsed ? drag.handleProps : {})}
         onClick={() => setCollapsed(p => !p)}
         title={collapsed ? "Open VISH" : "Collapse VISH"}
         style={{
@@ -298,7 +318,7 @@ export default function VishDirectorPanel({ project, scenes, selectedScene, onGe
           borderRadius:   collapsed ? 6 : "50%",
           background:     "rgba(251,191,36,0.12)",
           border:         "1px solid rgba(251,191,36,0.25)",
-          cursor:         "pointer",
+          cursor:         collapsed ? drag.handleProps.style.cursor : "pointer",
           display:        "flex",
           alignItems:     "center",
           justifyContent: "center",
@@ -306,6 +326,7 @@ export default function VishDirectorPanel({ project, scenes, selectedScene, onGe
           color:          "rgba(251,191,36,0.80)",
           flexShrink:     0,
           zIndex:         10,
+          touchAction:    "none",
         }}
       >
         {collapsed ? "⬡" : "◀"}
@@ -324,11 +345,16 @@ export default function VishDirectorPanel({ project, scenes, selectedScene, onGe
 
       {!collapsed && (
         <>
-          {/* ── Header ── */}
-          <div style={{
-            padding:      "10px 12px 0 12px",
-            paddingRight: 36, // room for collapse btn
-          }}>
+          {/* ── Header (drag handle) ── */}
+          <div
+            {...drag.handleProps}
+            style={{
+              padding:      "10px 12px 0 12px",
+              paddingRight: 36,
+              ...drag.handleProps.style,
+              cursor: drag.isDragging ? "grabbing" : "grab",
+            }}
+          >
             <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:8 }}>
               <div style={{
                 width:8, height:8, borderRadius:"50%",
@@ -346,6 +372,7 @@ export default function VishDirectorPanel({ project, scenes, selectedScene, onGe
               {(["sequence","shot","chat"] as Tab[]).map(t => (
                 <button
                   key={t}
+                  data-no-drag
                   onClick={() => setTab(t)}
                   style={{
                     flex:          1,

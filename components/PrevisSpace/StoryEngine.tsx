@@ -16,9 +16,10 @@
  *   Memory   → director memory — dominant tendencies, VISH observations
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import type { Scene, Project, DirectorMemory } from "@/types";
 import { deriveMemory } from "@/lib/director-memory";
+import { useFreeDrag, onPanelsReset } from "@/hooks/useFreeDrag";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -265,6 +266,20 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
     [scenes, project.id, memoryProp]
   );
 
+  // ── Free drag ──────────────────────────────────────────────────────────────
+  const drag = useFreeDrag({
+    panelId:  "story-engine-panel",
+    defaultX: 12,
+    defaultY: 10,
+    anchor:   "top-left",
+    width:    260,
+    height:   480,
+    safetyPx: 24,
+  });
+
+  // Reset Layout support
+  useEffect(() => onPanelsReset(drag.reset), [drag.reset]);
+
   // AI narrative insight (sequence-level chat, story framing)
   const getAiNarrative = useCallback(async () => {
     setAiLoading(true);
@@ -295,27 +310,31 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
     : `${analysis.totalRuntime}s`;
 
   return (
-    <div style={{
-      position:       "absolute",
-      bottom:         106,
-      left:           12,
-      width:          collapsed ? 36 : 260,
-      zIndex:         30,
-      background:     collapsed ? "transparent" : "rgba(10,10,18,0.97)",
-      border:         collapsed ? "none" : "1px solid rgba(255,255,255,0.09)",
-      borderRadius:   6,
-      backdropFilter: "blur(16px)",
-      boxShadow:      collapsed ? "none" : "0 4px 32px rgba(0,0,0,0.50)",
-      transition:     "width 0.2s ease",
-      overflow:       "hidden",
-      fontFamily:     "monospace",
-      maxHeight:       collapsed ? "auto" : 480,
-      display:        "flex",
-      flexDirection:  "column",
-    }}>
+    <div
+      ref={drag.panelRef}
+      onClick={drag.focus}
+      style={{
+        position:       "fixed",
+        left:           drag.initialX,
+        top:            drag.initialY,
+        width:          collapsed ? 36 : 260,
+        zIndex:         drag.zIndex,
+        background:     collapsed ? "transparent" : "rgba(10,10,18,0.97)",
+        border:         collapsed ? "none" : "1px solid rgba(255,255,255,0.09)",
+        borderRadius:   6,
+        backdropFilter: "blur(16px)",
+        boxShadow:      collapsed ? "none" : "0 4px 32px rgba(0,0,0,0.50)",
+        transition:     "width 0.2s ease",
+        overflow:       "hidden",
+        fontFamily:     "monospace",
+        maxHeight:      collapsed ? "auto" : 480,
+        display:        "flex",
+        flexDirection:  "column",
+      }}>
 
-      {/* ── Collapse toggle ── */}
+      {/* ── Collapse toggle (drag handle when collapsed) ── */}
       <button
+        {...(collapsed ? drag.handleProps : {})}
         onClick={() => setCollapsed(p => !p)}
         style={{
           position:       collapsed ? "static" : "absolute",
@@ -326,7 +345,7 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
           borderRadius:   collapsed ? 6 : "50%",
           background:     "rgba(99,102,241,0.14)",
           border:         "1px solid rgba(99,102,241,0.28)",
-          cursor:         "pointer",
+          cursor:         collapsed ? drag.handleProps.style.cursor : "pointer",
           display:        "flex",
           alignItems:     "center",
           justifyContent: "center",
@@ -334,6 +353,7 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
           color:          "rgba(147,150,255,0.75)",
           flexShrink:     0,
           zIndex:         10,
+          touchAction:    "none",
         }}
       >
         {collapsed ? "◈" : "▶"}
@@ -352,8 +372,15 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
 
       {!collapsed && (
         <>
-          {/* ── Header ── */}
-          <div style={{ padding:"10px 12px 0 34px" }}>
+          {/* ── Header (drag handle) ── */}
+          <div
+            {...drag.handleProps}
+            style={{
+              padding:"10px 12px 0 34px",
+              ...drag.handleProps.style,
+              cursor: drag.isDragging ? "grabbing" : "grab",
+            }}
+          >
             <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
               <span style={{ fontSize:8, color:"rgba(147,150,255,0.75)", letterSpacing:"0.22em", textTransform:"uppercase" }}>
                 Story Engine
@@ -368,7 +395,7 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
               {(["arc","cast","lenses","issues","memory"] as Tab[]).map(t => {
                 const labels: Record<Tab,string> = { arc:"Arc", cast:"Cast", lenses:"Locs", issues:`Issues${analysis.issues.length > 0 ? ` ${analysis.issues.length}` : ""}`, memory:"Memory" };
                 return (
-                  <button key={t} onClick={() => setTab(t)} style={{
+                  <button key={t} data-no-drag onClick={() => setTab(t)} style={{
                     flex:1, fontSize:6.5, padding:"3.5px 0",
                     borderRadius:"3px 3px 0 0",
                     border:`1px solid ${tab === t ? "rgba(99,102,241,0.40)" : "rgba(255,255,255,0.06)"}`,

@@ -21,6 +21,8 @@
 
 import { useState } from "react";
 import type { Project, Scene } from "@/types";
+import { put as putImage } from "@/lib/supabase/image-store";
+import { getImageTier, bumpQuota } from "@/lib/model-tiers";
 
 interface Props {
   onProjectCreated: (project: Project) => void;
@@ -123,6 +125,7 @@ export default function ScriptInput({ onProjectCreated, onProjectUpdated }: Prop
               prompt:  scene.imagePrompt,
               seed:    (idx + 1) * 1337,
               sceneId: scene.id,
+              tier:    getImageTier(projectId),
             }),
           });
 
@@ -132,6 +135,7 @@ export default function ScriptInput({ onProjectCreated, onProjectUpdated }: Prop
             provider?: string;
             model?:    string;
             durationMs?: number;
+            tier?:     string;
             error?:    string;
             kind?:     string;
           };
@@ -142,6 +146,19 @@ export default function ScriptInput({ onProjectCreated, onProjectUpdated }: Prop
             currentScenes = currentScenes.map(s =>
               s.id === scene.id ? { ...s, imageUrl: genData.dataUrl! } : s
             );
+            // Phase 14 — quota bookkeeping
+            bumpQuota("image", genData.tier ?? "draft");
+            // Phase 13 — universal image store: mirror to Supabase + cache
+            putImage({
+              sceneId:    scene.id,
+              projectId,
+              imageUrl:   genData.dataUrl,
+              prompt:     scene.imagePrompt,
+              provider:   genData.provider,
+              model:      genData.model,
+              tier:       genData.tier,
+              durationMs: genData.durationMs,
+            }).catch(() => {});
           } else {
             console.warn(`[ScriptInput] scene ${scene.order} ❌ kind=${genData.kind} error=${genData.error}`);
             // null stays — SceneCard shows retry button

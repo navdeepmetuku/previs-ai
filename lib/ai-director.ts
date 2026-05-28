@@ -19,8 +19,9 @@ export async function analyzeScene(
   scene:          Scene,
   storyMemory?:   Project["storyMemory"],
   memoryContext?: string,
+  tier?:          "flash" | "pro",
 ): Promise<SceneInsight> {
-  const model = await createModel();
+  const model = await createModel(tier);
 
   const context = [
     storyMemory ? `Project style: ${storyMemory.filmStyle}\nColour grade: ${storyMemory.colorGrade}` : "",
@@ -65,8 +66,9 @@ export async function analyzeSequence(
   scenes:         Scene[],
   project:        Pick<Project, "title" | "genre" | "storyMemory">,
   memoryContext?: string,
+  tier?:          "flash" | "pro",
 ): Promise<SequenceInsight> {
-  const model = await createModel();
+  const model = await createModel(tier);
 
   const shotList = scenes.map(s =>
     `  Shot ${s.order}: "${s.title}" | ${s.shotType} | ${s.mood} | ${s.timelineMeta?.durationSeconds ?? 3}s | trans: ${s.timelineMeta?.transitionType ?? "cut"}`
@@ -102,8 +104,9 @@ export async function directorChat(
   project:         Pick<Project, "title" | "genre" | "storyMemory" | "scenes">,
   selectedScene?:  Scene | null,
   memoryContext?:  string,
+  tier?:           "flash" | "pro",
 ): Promise<string> {
-  const model = await createModel();
+  const model = await createModel(tier);
 
   const systemContext = `You are VISH — Visual Intelligence for Shot Handling. Embedded AI co-director inside PREVIS-LAB.
 
@@ -147,8 +150,9 @@ export async function generateTendencies(
     "dominantLens" | "dominantMovement" | "locationVariety" | "moodVariety"
   >,
   project: Pick<Project, "title" | "genre" | "scenes">,
+  tier?:   "flash" | "pro",
 ): Promise<{ tendencies: string[]; flags: string[] }> {
-  const model = await createModel();
+  const model = await createModel(tier);
 
   const shotSummary = project.scenes.map(s =>
     `${s.order}. ${s.shotType}, ${s.mood}, ${s.lighting}`

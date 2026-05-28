@@ -16,7 +16,7 @@
  *   Failure: { ok: false, error, kind, retryable, sceneId }
  */
 
-import { generateImage, getReadyProviders } from "@/lib/image-providers/manager";
+import { generateImage, getReadyProviders, type ImageTier } from "@/lib/image-providers/manager";
 import { ProviderError }                    from "@/lib/image-providers/types";
 import { NEGATIVE_PROMPT, buildFullPrompt, sceneToSeed } from "@/lib/image-prompts";
 import type { Scene, Project }              from "@/types";
@@ -31,6 +31,7 @@ export async function POST(request: Request) {
   let prompt  = "";
   let seed    = 0;
   let sceneId = "";
+  let tier: ImageTier = "draft";
 
   try {
     const body = await request.json() as {
@@ -38,23 +39,31 @@ export async function POST(request: Request) {
       prompt?:  string;
       seed?:    number;
       sceneId?: string;
+      tier?:    ImageTier;
       // Mode B — full context
-      scene?:   Scene;
-      project?: Pick<Project, "genre" | "storyMemory" | "visualContext">;
+      scene?:      Scene;
+      project?:    Pick<Project, "genre" | "storyMemory" | "visualContext">;
+      allScenes?:  Scene[];   // full sequence for shot relationship awareness
+      sceneIndex?: number;
     };
 
     sceneId = body.sceneId ?? body.scene?.id ?? "";
+    if (body.tier && ["draft","standard","premium","hf"].includes(body.tier)) {
+      tier = body.tier;
+    }
 
     if (body.scene && body.project) {
-      // ── Mode B: build continuity-aware prompt server-side ─────────────────
-      prompt = buildFullPrompt(body.scene, body.project);
+      prompt = buildFullPrompt(body.scene, body.project, {
+        allScenes:  body.allScenes,
+        sceneIndex: body.sceneIndex,
+      });
       seed   = body.seed ?? sceneToSeed(body.scene.id);
-      console.log(`[generate-image:${reqId}] MODE B (continuity-aware) scene="${body.scene.title}"`);
+      console.log(`[generate-image:${reqId}] MODE B (continuity-aware) tier=${tier} scene="${body.scene.title}" idx=${body.sceneIndex ?? "?"}`);
     } else {
       // ── Mode A: raw prompt passthrough ────────────────────────────────────
       prompt = (body.prompt ?? "").trim();
       seed   = body.seed ?? 0;
-      console.log(`[generate-image:${reqId}] MODE A (raw prompt)`);
+      console.log(`[generate-image:${reqId}] MODE A (raw prompt) tier=${tier}`);
     }
 
   } catch {
@@ -72,7 +81,7 @@ export async function POST(request: Request) {
   }
 
   const ready = getReadyProviders();
-  console.log(`[generate-image:${reqId}] providers: [${ready.join(", ")}] | seed=${seed}`);
+  console.log(`[generate-image:${reqId}] tier=${tier} | providers ready: [${ready.join(", ")}] | seed=${seed}`);
   console.log(`[generate-image:${reqId}] prompt (${prompt.length}ch): ${prompt.slice(0, 110)}…`);
 
   // ── Generate ──────────────────────────────────────────────────────────────
@@ -81,7 +90,7 @@ export async function POST(request: Request) {
       prompt,
       negativePrompt: NEGATIVE_PROMPT,
       seed:           seed > 0 ? seed : undefined,
-    });
+    }, tier);
 
     console.log(`[generate-image:${reqId}] ✅ ${result.provider} | ${result.bytes}B | ${result.durationMs}ms`);
 
@@ -92,6 +101,7 @@ export async function POST(request: Request) {
       model:              result.model,
       durationMs:         result.durationMs,
       bytes:              result.bytes,
+      tier:               result.tier,
       sceneId,
       prompt,              // return prompt so client can display/debug
       attemptedProviders: result.attemptedProviders,

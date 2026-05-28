@@ -14,7 +14,7 @@
  */
 
 import { GoogleGenerativeAI, type GenerativeModel } from "@google/generative-ai";
-import { GEMINI_MODEL_PRIORITY, GEMINI_MAX_RETRIES, GEMINI_RETRY_DELAY_MS } from "./models";
+import { GEMINI_MODEL_PRIORITY, GEMINI_TIER_PRIORITY, GEMINI_MAX_RETRIES, GEMINI_RETRY_DELAY_MS } from "./models";
 
 // ── Error classification ────────────────────────────────────────────────────
 
@@ -67,11 +67,14 @@ function getClient(): GoogleGenerativeAI {
  * - Retries once on transient 503 errors
  * - Throws AiError("quota") on quota exhaustion — callers must catch and
  *   serve fallback content rather than surfacing the error to the user
+ *
+ * Optional `tier` selects between flash (default) and pro priority lists.
  */
-export async function createModel(): Promise<GenerativeModel> {
+export async function createModel(tier?: "flash" | "pro"): Promise<GenerativeModel> {
   const client = getClient();
+  const priority = tier ? GEMINI_TIER_PRIORITY[tier] : GEMINI_MODEL_PRIORITY;
 
-  for (const modelName of GEMINI_MODEL_PRIORITY) {
+  for (const modelName of priority) {
     let attempts = 0;
     const maxAttempts = GEMINI_MAX_RETRIES + 1;
 

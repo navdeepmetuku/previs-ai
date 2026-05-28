@@ -3,12 +3,16 @@
 import { useState, useEffect, useRef, memo } from "react";
 import type { Scene, ImageStatus } from "@/types";
 import { getCachedImageUrl, cacheImageUrl } from "@/lib/image-cache";
+import { useImageStore } from "@/lib/supabase/useImageStore";
+import { put as putImage } from "@/lib/supabase/image-store";
+import { getImageTier } from "@/lib/model-tiers";
 
 interface Props {
   scene:      Scene;
   isSelected: boolean;
   onClick:    () => void;
   loadDelay?: number;
+  projectId?: string;
 }
 
 /**
@@ -23,7 +27,7 @@ interface Props {
  */
 type ImgStage = "idle" | "loading" | "loaded" | "failed";
 
-const SceneCard = memo(function SceneCard({ scene, isSelected, onClick, loadDelay = 0 }: Props) {
+const SceneCard = memo(function SceneCard({ scene, isSelected, onClick, loadDelay = 0, projectId }: Props) {
   const [displaySrc,  setDisplaySrc]  = useState<string | null>(null);
   const [imgStage,    setImgStage]    = useState<ImgStage>("idle");
   const [status,      setStatus]      = useState<ImageStatus>("idle");
@@ -34,18 +38,30 @@ const SceneCard = memo(function SceneCard({ scene, isSelected, onClick, loadDela
   const sceneRef   = useRef(scene);
   sceneRef.current = scene;
 
+  // Phase 13 — subscribe to Supabase image store. If the image store has a
+  // newer URL than the scene prop, prefer that (e.g. PREVIS SPACE generated
+  // an image while Studio was open).
+  const { imageUrl: storeUrl } = useImageStore(scene.id, scene.imageUrl);
+  const lastEffectiveUrlRef = useRef<string | null>(null);
+
   function clearDelay() {
     if (delayTimer.current) { clearTimeout(delayTimer.current); delayTimer.current = null; }
   }
 
   // ── Reset + schedule on scene URL change ──────────────────────────────────
   useEffect(() => {
+    // Phase 13: prefer image-store URL over scene prop (cross-view sync)
+    const url = storeUrl ?? scene.imageUrl;
+
+    // Dedup — if URL hasn't changed, do nothing (prevents image flicker
+    // when parent re-renders for unrelated reasons)
+    if (url === lastEffectiveUrlRef.current) return;
+    lastEffectiveUrlRef.current = url;
+
     clearDelay();
     setDisplaySrc(null);
     setImgStage("idle");
     setStatus("idle");
-
-    const url = scene.imageUrl;
 
     if (!url) {
       console.warn(`[SceneCard] scene ${scene.order} no imageUrl — showing failed`);
@@ -93,7 +109,7 @@ const SceneCard = memo(function SceneCard({ scene, isSelected, onClick, loadDela
 
     return clearDelay;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scene.imageUrl, scene.id]);
+  }, [scene.imageUrl, scene.id, storeUrl]);
 
   // ── <img> events ─────────────────────────────────────────────────────────
   function handleLoad() {
@@ -134,6 +150,7 @@ const SceneCard = memo(function SceneCard({ scene, isSelected, onClick, loadDela
             : { scene: s }
           ),
           sceneId: s.id,
+          tier:    getImageTier(projectId),
         }),
       });
       const data = await res.json() as { ok: boolean; dataUrl?: string; error?: string; kind?: string };
@@ -143,6 +160,15 @@ const SceneCard = memo(function SceneCard({ scene, isSelected, onClick, loadDela
         setDisplaySrc(data.dataUrl);
         setImgStage("loading");
         cacheImageUrl(s.id, data.dataUrl);
+        // Phase 13 — push to image store
+        if (projectId) {
+          putImage({
+            sceneId:   s.id,
+            projectId,
+            imageUrl:  data.dataUrl,
+            prompt:    s.imagePrompt,
+          }).catch(() => {});
+        }
       } else {
         console.error(`[SceneCard] scene ${s.order} retry ❌ kind=${data.kind} error=${data.error}`);
         setImgStage("failed");

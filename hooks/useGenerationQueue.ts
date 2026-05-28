@@ -12,6 +12,7 @@
  *   - onFrameReady callback fires when a scene gets its image
  *   - Cancellable at any time
  *   - Uses Mode B of /api/generate-image (full continuity context)
+ *   - Phase 14 — reads current image tier from localStorage and passes to API
  *
  * Usage:
  *   const { enqueue, status, cancel, isRunning } = useGenerationQueue({
@@ -24,6 +25,8 @@
 
 import { useState, useRef, useCallback } from "react";
 import type { Scene, Project } from "@/types";
+import { put as putImage } from "@/lib/supabase/image-store";
+import { getImageTier, bumpQuota } from "@/lib/model-tiers";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -38,7 +41,7 @@ interface SceneStatus {
 }
 
 interface Options {
-  project:      Pick<Project, "id" | "genre" | "storyMemory" | "visualContext">;
+  project:      Pick<Project, "id" | "genre" | "storyMemory" | "visualContext" | "scenes">;
   onFrameReady: (sceneId: string, dataUrl: string) => void;
 }
 
@@ -83,28 +86,49 @@ export function useGenerationQueue({ project, onFrameReady }: Options): QueueHoo
       setStatus(scene.id, { status: "generating" });
 
       try {
+        const allScenes  = project.scenes ?? [];
+        const sceneIndex = allScenes.findIndex(s => s.id === scene.id);
+        const tier       = getImageTier(project.id);
+
         const res = await fetch("/api/generate-image", {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify({
             scene,
             project: {
-              genre:        project.genre,
-              storyMemory:  project.storyMemory,
+              genre:         project.genre,
+              storyMemory:   project.storyMemory,
               visualContext: project.visualContext,
             },
-            sceneId: scene.id,
+            allScenes:  allScenes,
+            sceneIndex: sceneIndex >= 0 ? sceneIndex : undefined,
+            sceneId:    scene.id,
+            tier,
           }),
         });
 
         const data = await res.json() as {
           ok: boolean; dataUrl?: string; error?: string;
-          provider?: string; durationMs?: number;
+          provider?: string; durationMs?: number; model?: string; bytes?: number; tier?: string;
         };
 
         if (data.ok && data.dataUrl) {
           setStatus(scene.id, { status: "done", provider: data.provider, ms: data.durationMs });
           onFrameReady(scene.id, data.dataUrl);
+          // Phase 14 — quota bookkeeping
+          bumpQuota("image", data.tier ?? tier);
+          // Phase 13 — universal image store: mirror to Supabase + cache
+          putImage({
+            sceneId:    scene.id,
+            projectId:  project.id,
+            imageUrl:   data.dataUrl,
+            prompt:     scene.imagePrompt,
+            provider:   data.provider,
+            model:      data.model,
+            tier:       data.tier ?? tier,
+            bytes:      data.bytes,
+            durationMs: data.durationMs,
+          }).catch(() => {});
         } else {
           setStatus(scene.id, { status: "failed", error: data.error ?? "Generation failed" });
         }

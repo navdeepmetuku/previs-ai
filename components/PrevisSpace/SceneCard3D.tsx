@@ -25,6 +25,7 @@ import { useFrame } from "@react-three/fiber";
 import { Text, Html } from "@react-three/drei";
 import * as THREE from "three";
 import type { Scene } from "@/types";
+import { useImageStore } from "@/lib/supabase/useImageStore";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -59,8 +60,10 @@ const DEFAULT_PALETTE: MoodPalette = {
 
 // ── Canvas placeholder ────────────────────────────────────────────────────────
 
-const CW = 512;
-const CH = 288;
+// Higher resolution for crispness; 16:9 aspect — texture upload is one-time
+// per card so this doesn't hurt runtime perf.
+const CW = 1024;
+const CH = 576;
 
 function createPlaceholder(scene: Scene): THREE.CanvasTexture {
   const cv  = document.createElement("canvas");
@@ -89,7 +92,7 @@ function createPlaceholder(scene: Scene): THREE.CanvasTexture {
 
   // Rule-of-thirds guides
   ctx.save(); ctx.globalAlpha=0.07; ctx.strokeStyle="#fff";
-  ctx.lineWidth=0.5; ctx.setLineDash([4,8]);
+  ctx.lineWidth=1; ctx.setLineDash([8,16]);
   [CW/3,CW*2/3].forEach(x=>{ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,CH);ctx.stroke();});
   [CH/3,CH*2/3].forEach(y=>{ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(CW,y);ctx.stroke();});
   ctx.restore();
@@ -104,9 +107,9 @@ function createPlaceholder(scene: Scene): THREE.CanvasTexture {
 
   // Lens flare dot
   ctx.save(); ctx.globalAlpha=0.5;
-  const fl=ctx.createRadialGradient(gx,gy,0,gx,gy,6);
+  const fl=ctx.createRadialGradient(gx,gy,0,gx,gy,12);
   fl.addColorStop(0,rgba(pal.accent,0.9)); fl.addColorStop(1,"rgba(0,0,0,0)");
-  ctx.fillStyle=fl; ctx.fillRect(gx-10,gy-10,20,20);
+  ctx.fillStyle=fl; ctx.fillRect(gx-20,gy-20,40,40);
   ctx.restore();
 
   // Letterbox
@@ -116,8 +119,8 @@ function createPlaceholder(scene: Scene): THREE.CanvasTexture {
 
   // Corner brackets
   ctx.save(); ctx.globalAlpha=0.55;
-  ctx.strokeStyle=rgba(pal.accent,0.7); ctx.lineWidth=1.5; ctx.setLineDash([]);
-  const M=12,L=18;
+  ctx.strokeStyle=rgba(pal.accent,0.7); ctx.lineWidth=3; ctx.setLineDash([]);
+  const M=24,L=36;
   ([
     [M,M+lb,M+L,M+lb,M,M+lb+L],
     [CW-M,M+lb,CW-M-L,M+lb,CW-M,M+lb+L],
@@ -132,51 +135,55 @@ function createPlaceholder(scene: Scene): THREE.CanvasTexture {
   // Scene number badge
   ctx.save();
   ctx.fillStyle=pal.accent;
-  rr(ctx,M,lb+6,32,18,2); ctx.fill();
-  ctx.fillStyle="#000"; ctx.font="bold 10px monospace";
+  rr(ctx,M,lb+12,64,36,3); ctx.fill();
+  ctx.fillStyle="#000"; ctx.font="bold 20px monospace";
   ctx.textAlign="center"; ctx.textBaseline="middle";
-  ctx.fillText(String(scene.order).padStart(2,"0"),M+16,lb+15);
+  ctx.fillText(String(scene.order).padStart(2,"0"),M+32,lb+30);
   ctx.restore();
 
   // Shot type badge
   ctx.save();
   const ab=abbr(scene.shotType);
-  ctx.font="bold 8px monospace"; ctx.textAlign="right"; ctx.textBaseline="top";
+  ctx.font="bold 16px monospace"; ctx.textAlign="right"; ctx.textBaseline="top";
   ctx.globalAlpha=0.7;
-  const sw=ctx.measureText(ab).width+8;
-  ctx.fillStyle="rgba(0,0,0,0.6)"; rr(ctx,CW-M-sw,lb+6,sw,16,2); ctx.fill();
+  const sw=ctx.measureText(ab).width+16;
+  ctx.fillStyle="rgba(0,0,0,0.6)"; rr(ctx,CW-M-sw,lb+12,sw,32,3); ctx.fill();
   ctx.fillStyle=rgba(pal.accent,0.9);
-  ctx.fillText(ab,CW-M-4,lb+8);
+  ctx.fillText(ab,CW-M-8,lb+16);
   ctx.restore();
 
   // Title lower-third
   ctx.save();
-  const ty=CH-lb-34;
-  const sc=ctx.createLinearGradient(0,ty-18,0,CH-lb);
+  const ty=CH-lb-68;
+  const sc=ctx.createLinearGradient(0,ty-36,0,CH-lb);
   sc.addColorStop(0,"rgba(0,0,0,0)"); sc.addColorStop(0.4,"rgba(0,0,0,0.55)"); sc.addColorStop(1,"rgba(0,0,0,0.75)");
-  ctx.fillStyle=sc; ctx.fillRect(0,ty-18,CW,CH-lb-(ty-18));
-  ctx.font="600 13px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="bottom";
-  ctx.fillStyle="rgba(255,255,255,0.92)"; ctx.shadowColor="rgba(0,0,0,0.8)"; ctx.shadowBlur=6;
-  ctx.fillText(trunc(ctx,scene.title,CW-32),CW/2,ty);
+  ctx.fillStyle=sc; ctx.fillRect(0,ty-36,CW,CH-lb-(ty-36));
+  ctx.font="600 26px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="bottom";
+  ctx.fillStyle="rgba(255,255,255,0.92)"; ctx.shadowColor="rgba(0,0,0,0.8)"; ctx.shadowBlur=12;
+  ctx.fillText(trunc(ctx,scene.title,CW-64),CW/2,ty);
   ctx.restore();
 
   // Mood label
-  ctx.save(); ctx.font="700 7px monospace"; ctx.textAlign="left"; ctx.textBaseline="bottom";
-  ctx.fillStyle=rgba(pal.accent,0.65); ctx.fillText(pal.label,M,CH-lb-8); ctx.restore();
+  ctx.save(); ctx.font="700 14px monospace"; ctx.textAlign="left"; ctx.textBaseline="bottom";
+  ctx.fillStyle=rgba(pal.accent,0.65); ctx.fillText(pal.label,M,CH-lb-16); ctx.restore();
 
   // Location label
-  ctx.save(); ctx.font="400 7px monospace"; ctx.textAlign="right"; ctx.textBaseline="bottom";
+  ctx.save(); ctx.font="400 14px monospace"; ctx.textAlign="right"; ctx.textBaseline="bottom";
   ctx.fillStyle="rgba(255,255,255,0.28)";
-  ctx.fillText(trunc(ctx,scene.location.toUpperCase(),CW*.45),CW-M,CH-lb-8);
+  ctx.fillText(trunc(ctx,scene.location.toUpperCase(),CW*.45),CW-M,CH-lb-16);
   ctx.restore();
 
   // Accent line
-  ctx.save(); ctx.globalAlpha=0.4; ctx.strokeStyle=pal.accent; ctx.lineWidth=0.75;
-  ctx.beginPath(); ctx.moveTo(M,CH-lb-4); ctx.lineTo(CW-M,CH-lb-4); ctx.stroke();
+  ctx.save(); ctx.globalAlpha=0.4; ctx.strokeStyle=pal.accent; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(M,CH-lb-8); ctx.lineTo(CW-M,CH-lb-8); ctx.stroke();
   ctx.restore();
 
   const t = new THREE.CanvasTexture(cv);
-  t.colorSpace = THREE.SRGBColorSpace;
+  t.colorSpace      = THREE.SRGBColorSpace;
+  t.minFilter       = THREE.LinearMipMapLinearFilter;
+  t.magFilter       = THREE.LinearFilter;
+  t.generateMipmaps = true;
+  t.anisotropy      = 8;
   return t;
 }
 
@@ -249,37 +256,103 @@ export default function SceneCard3D({ scene, position, isSelected, onSelect, onD
     [scene.id, scene.mood, scene.order],
   );
 
-  // Real image texture — draw via canvas for reliable WebGL upload
-  // (THREE.Texture/TextureLoader fail silently on large base64 data URLs)
+  // Real image texture — draw via canvas for reliable WebGL upload.
+  // Tracks the texture in a ref so cleanup only disposes what THIS effect created,
+  // preventing the race where cleanup disposes a texture created by a newer effect.
   const [imageTex, setImageTex] = useState<THREE.Texture | null>(null);
-  useEffect(() => {
-    if (!scene.imageUrl) { setImageTex(null); return; }
-    let dead = false;
+  const imageTexRef = useRef<THREE.Texture | null>(null);
+  const lastUrlRef  = useRef<string | null>(null);
 
+  // Phase 13 — prefer image-store URL (cross-view sync) over scene.imageUrl prop
+  const { imageUrl: effectiveUrl } = useImageStore(scene.id, scene.imageUrl);
+
+  useEffect(() => {
+    // Dedup — if URL hasn't changed, do nothing (prevents texture flicker
+    // when the parent re-renders for unrelated reasons)
+    if (effectiveUrl === lastUrlRef.current) return;
+    lastUrlRef.current = effectiveUrl;
+
+    if (!effectiveUrl) {
+      // Don't dispose — keep showing whatever we last had (placeholder or older image).
+      // Disposal happens on unmount only.
+      return;
+    }
+
+    let cancelled = false;
     const img = new Image();
-    img.onload = () => {
-      if (dead) return;
-      // Draw to canvas → CanvasTexture is the most reliable path for data URLs in WebGL
-      const canvas  = document.createElement("canvas");
-      canvas.width  = img.naturalWidth  || 512;
-      canvas.height = img.naturalHeight || 288;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    // Allow cross-origin CDN images (Supabase, fal.ai, replicate.delivery)
+    img.crossOrigin = "anonymous";
+    img.decoding    = "async";
+
+    img.onload = async () => {
+      if (cancelled) return;
+
+      // Wait for decode to complete (avoids partial-frame upload to GPU)
+      try { await img.decode?.(); } catch {}
+      if (cancelled) return;
+
+      // Pick best-fit resolution — preserve actual image quality but cap at 2048
+      // to avoid WebGL texture-size limits on lower-end GPUs.
+      const maxDim = 2048;
+      const sw = img.naturalWidth  || 1024;
+      const sh = img.naturalHeight || 576;
+      const scale = Math.min(1, maxDim / Math.max(sw, sh));
+      const tw = Math.max(1, Math.round(sw * scale));
+      const th = Math.max(1, Math.round(sh * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width  = tw;
+      canvas.height = th;
+      const ctx = canvas.getContext("2d", { alpha: false });
+      if (!ctx || cancelled) return;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, tw, th);
+
       const tex = new THREE.CanvasTexture(canvas);
-      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.colorSpace      = THREE.SRGBColorSpace;
+      tex.minFilter       = THREE.LinearMipMapLinearFilter;
+      tex.magFilter       = THREE.LinearFilter;
+      tex.generateMipmaps = true;          // mipmaps prevent shimmering at distance
+      tex.anisotropy      = 8;              // crisp at angle (capped at GPU max)
+      tex.needsUpdate     = true;
+
+      // Dispose previous before storing new — only after we have the new one ready
+      const prev = imageTexRef.current;
+      imageTexRef.current = tex;
+      if (prev && prev !== tex) prev.dispose();
+
       setImageTex(tex);
     };
-    img.onerror = () => { if (!dead) setImageTex(null); };
-    img.src = scene.imageUrl;
+
+    img.onerror = () => {
+      if (cancelled) return;
+      console.warn(`[SceneCard3D] image load failed scene=${scene.id.slice(0, 8)} url=${effectiveUrl.slice(0, 60)}`);
+      // Keep last good texture — don't null out → no black flash
+    };
+    img.src = effectiveUrl;
 
     return () => {
-      dead = true;
-      setImageTex(prev => { prev?.dispose(); return null; });
+      cancelled = true;
+      // Do NOT dispose imageTexRef here — the texture may still be committed
+      // to the material. Disposal happens when the next texture is ready (above)
+      // or on component unmount (below).
     };
-  }, [scene.imageUrl]);
+  }, [effectiveUrl, scene.id]);
 
-  useEffect(() => () => { placeholderTex.dispose(); }, [placeholderTex]);
+  // Dispose image texture on unmount only
+  useEffect(() => {
+    return () => { imageTexRef.current?.dispose(); imageTexRef.current = null; };
+  }, []);
+
+  // Dispose placeholder on unmount.
+  // Placeholder is recomputed on scene.id/mood/order change — those are stable
+  // per scene so the new placeholder lifecycle is short. We dispose only on
+  // unmount to avoid the race where the swap happens mid-frame.
+  useEffect(() => {
+    const tex = placeholderTex;
+    return () => { tex.dispose(); };
+  }, [placeholderTex]);
 
   // Dismiss confirm-delete if deselected/unhovered
   useEffect(() => {
@@ -306,16 +379,23 @@ export default function SceneCard3D({ scene, position, isSelected, onSelect, onD
     groupRef.current.position.y = currentY.current + bob;
   });
 
-  const displayTex        = imageTex ?? placeholderTex;
+  // Sticky display texture — once a real image is loaded, keep showing it
+  // even if the URL transiently changes. Only the loader effect can swap
+  // imageTexRef. This prevents the "image → placeholder → image" flicker
+  // that happens when parent re-renders and React batches setState.
+  const displayTex = imageTex ?? placeholderTex;
 
-  // Force WebGL to re-upload the texture whenever it changes.
-  // R3F does not set needsUpdate automatically when the map prop switches
-  // between two different texture objects.
+  // Single source of truth for material map — imperative only.
+  // Avoids the fragile dual-write (R3F prop reconciler + imperative effect).
+  // Only update when the texture actually changes — not every render.
+  const lastDisplayTexRef = useRef<THREE.Texture | null>(null);
   useEffect(() => {
-    if (matRef.current) {
-      matRef.current.map = displayTex;
-      matRef.current.needsUpdate = true;
-    }
+    const mat = matRef.current;
+    if (!mat) return;
+    if (lastDisplayTexRef.current === displayTex) return;  // dedup
+    lastDisplayTexRef.current = displayTex;
+    mat.map = displayTex;
+    mat.needsUpdate = true;
   }, [displayTex]);
   const emissive          = isSelected ? selEmissive : moodEmissive;
   const emissiveIntensity = isSelected ? 0.20 : hovered ? 0.10 : 0.04;
@@ -335,7 +415,6 @@ export default function SceneCard3D({ scene, position, isSelected, onSelect, onD
         <planeGeometry args={[W, H]} />
         <meshStandardMaterial
           ref={matRef}
-          map={displayTex}
           emissive={emissive}
           emissiveIntensity={emissiveIntensity}
           roughness={0.72}

@@ -171,6 +171,14 @@ export interface StoryVisualMemory {
   filmStyle:       string;
   colorGrade:      string;
   atmosphericBase: string;
+  /** Dominant mood across all scenes — drives grade consistency */
+  dominantMood:    string;
+  /** Most-used shot type — defines the film's visual rhythm */
+  dominantShotType: string;
+  /** Most-used camera movement — defines the film's kinetic feel */
+  dominantMovement: string | null;
+  /** Contrast profile derived from dominant mood */
+  contrastProfile:  "high" | "medium" | "low" | "flat";
 }
 
 // ── Continuity context ───────────────────────────────────────────────────────

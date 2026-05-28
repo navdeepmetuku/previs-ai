@@ -7,8 +7,9 @@
  * Positioned bottom-left, collapsible.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Scene } from "@/types";
+import { useFreeDrag, onPanelsReset } from "@/hooks/useFreeDrag";
 
 interface Props {
   scene:    Scene;
@@ -42,6 +43,20 @@ export default function ShotDetailPanel({ scene, onClose }: Props) {
   const [notes,        setNotes]        = useState<Record<string, string>>({});
   const accent = MOOD_ACCENT[scene.mood] ?? "#fbbf24";
 
+  // ── Free drag ──────────────────────────────────────────────────────────────
+  const drag = useFreeDrag({
+    panelId:  "shot-detail-panel",
+    defaultX: 12,
+    defaultY: 10,
+    anchor:   "top-left",
+    width:    240,
+    height:   420,
+    safetyPx: 24,
+  });
+
+  // Reset Layout support
+  useEffect(() => onPanelsReset(drag.reset), [drag.reset]);
+
   const handleNoteChange = useCallback((cat: string, val: string) => {
     setNotes(prev => ({ ...prev, [cat]: val }));
   }, []);
@@ -55,11 +70,13 @@ export default function ShotDetailPanel({ scene, onClose }: Props) {
 
   return (
     <div
+      ref={drag.panelRef}
+      onClick={drag.focus}
       style={{
-        position:       "absolute",
-        top:            10,
-        left:           12,
-        zIndex:         30,
+        position:       "fixed",
+        left:           drag.initialX,
+        top:            drag.initialY,
+        zIndex:         drag.zIndex,
         width:          240,
         background:     "rgba(14,14,22,0.97)",
         border:         "1px solid rgba(255,255,255,0.10)",
@@ -70,11 +87,17 @@ export default function ShotDetailPanel({ scene, onClose }: Props) {
         transition:     "height 0.2s ease",
       }}
     >
-      {/* ── Header ── */}
+      {/* ── Header (drag handle) ── */}
       <div
-        className="flex items-center justify-between px-3 py-2 cursor-pointer"
-        style={{ borderBottom: `1px solid ${accent}33`, background: `${accent}08` }}
-        onClick={() => setCollapsed(p => !p)}
+        {...drag.handleProps}
+        className="flex items-center justify-between px-3 py-2"
+        style={{
+          borderBottom: `1px solid ${accent}33`,
+          background:   `${accent}08`,
+          ...drag.handleProps.style,
+          cursor: drag.isDragging ? "grabbing" : "grab",
+        }}
+        onDoubleClick={() => setCollapsed(p => !p)}
       >
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
@@ -82,7 +105,7 @@ export default function ShotDetailPanel({ scene, onClose }: Props) {
             Shot {scene.order} · {scene.title}
           </span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5" data-no-drag>
           {onClose && (
             <button
               onClick={(e) => { e.stopPropagation(); onClose(); }}
@@ -90,7 +113,10 @@ export default function ShotDetailPanel({ scene, onClose }: Props) {
               style={{ lineHeight: 1, padding: "2px 3px" }}
             >✕</button>
           )}
-          <span className="text-[8px] text-white/25">{collapsed ? "▲" : "▼"}</span>
+          <span
+            className="text-[8px] text-white/25 cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); setCollapsed(p => !p); }}
+          >{collapsed ? "▲" : "▼"}</span>
         </div>
       </div>
 

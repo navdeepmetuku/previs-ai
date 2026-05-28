@@ -4,12 +4,15 @@
  * ShotListPanel — professional shot list overlay.
  *
  * Displays a production-ready table of all shots.
- * "Export PDF" triggers window.print() with print-specific CSS
- * that styles the page as a clean A4/Letter shot list document.
+ * Phase 13/14/Export: full export menu with PDF / Storyboard / TXT / CSV / JSON / ZIP.
  */
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { Project } from "@/types";
+import {
+  exportShotListPdf, exportStoryboardPdf, exportShotListTxt,
+  exportShotListCsv, exportProjectJson,   exportImagesZip,
+} from "@/lib/export";
 
 interface Props {
   project: Project;
@@ -31,97 +34,30 @@ const MOOD_COLORS: Record<string, string> = {
 
 export default function ShotListPanel({ project, onClose }: Props) {
   const tableRef = useRef<HTMLDivElement>(null);
+  const [exportOpen,   setExportOpen]   = useState(false);
+  const [zipBusy,      setZipBusy]      = useState(false);
+  const [zipProgress,  setZipProgress]  = useState({ done: 0, total: 0 });
+
+  async function handleZipExport() {
+    if (zipBusy) return;
+    setZipBusy(true);
+    setZipProgress({ done: 0, total: project.scenes.length });
+    try {
+      await exportImagesZip(project, {
+        onProgress: (done, total) => setZipProgress({ done, total }),
+      });
+    } catch (err) {
+      console.error("[Export] ZIP failed", err);
+      alert("ZIP export failed. See console for details.");
+    } finally {
+      setZipBusy(false);
+      setExportOpen(false);
+    }
+  }
 
   function handlePrint() {
-    // Build a clean print-only HTML document
-    const rows = project.scenes.map(scene => {
-      const dur  = scene.timelineMeta?.durationSeconds ?? 3;
-      const lens = scene.cinematicMeta?.focalLengthMm ? `${scene.cinematicMeta.focalLengthMm}mm` : "—";
-      const move = scene.cinematicMeta?.cameraMovement ?? "—";
-      const tag  = scene.reviewMeta?.productionTag ?? "";
-      return `
-        <tr>
-          <td>${String(scene.order).padStart(2,"0")}</td>
-          <td><strong>${scene.title}</strong></td>
-          <td>${scene.shotType}</td>
-          <td>${lens}</td>
-          <td>${move}</td>
-          <td>${scene.lighting}</td>
-          <td>${scene.mood}</td>
-          <td>${scene.location}</td>
-          <td>${dur}s</td>
-          <td>${scene.timelineMeta?.transitionType ?? "cut"}</td>
-          <td>${scene.characters || "—"}</td>
-          <td>${tag ? `<span class="tag tag-${tag}">${tag}</span>` : "—"}</td>
-          <td class="notes">${scene.timelineMeta?.directorNotes ?? ""}</td>
-        </tr>`;
-    }).join("");
-
-    const totalDur = project.scenes.reduce((a, s) => a + (s.timelineMeta?.durationSeconds ?? 3), 0);
-
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>${project.title} — Shot List</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 9pt; color: #111; background: #fff; }
-    .header { padding: 16px 24px 10px; border-bottom: 2px solid #111; margin-bottom: 12px; }
-    .header h1 { font-size: 16pt; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; }
-    .header .meta { font-size: 8pt; color: #555; margin-top: 3px; display: flex; gap: 20px; }
-    table { width: 100%; border-collapse: collapse; font-size: 8pt; }
-    thead tr { background: #111; color: #fff; }
-    thead th { padding: 6px 8px; text-align: left; font-weight: 700; font-size: 7pt; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
-    tbody tr:nth-child(even) { background: #f8f8f8; }
-    tbody tr:hover { background: #f0f0f0; }
-    td { padding: 5px 8px; vertical-align: top; border-bottom: 1px solid #e5e5e5; }
-    td:first-child { font-weight: 700; font-size: 9pt; color: #555; width: 28px; }
-    .notes { font-size: 7.5pt; color: #666; max-width: 160px; }
-    .tag { padding: 1px 5px; border-radius: 2px; font-size: 6.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-    .tag-approved { background: #dcfce7; color: #166534; }
-    .tag-revision  { background: #fef9c3; color: #713f12; }
-    .tag-hold      { background: #fee2e2; color: #991b1b; }
-    .tag-ready     { background: #cffafe; color: #155e75; }
-    .footer { margin-top: 16px; padding: 8px 24px; border-top: 1px solid #ddd; font-size: 7.5pt; color: #888; display: flex; justify-content: space-between; }
-    @page { size: A4 landscape; margin: 15mm; }
-    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>${project.title}</h1>
-    <div class="meta">
-      <span>Genre: ${project.genre}</span>
-      <span>Shots: ${project.scenes.length}</span>
-      <span>Total duration: ${totalDur.toFixed(1)}s</span>
-      ${project.storyMemory ? `<span>Style: ${project.storyMemory.filmStyle.split(",")[0]}</span>` : ""}
-      <span>Generated: ${new Date(project.createdAt).toLocaleDateString()}</span>
-    </div>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th>#</th><th>Title</th><th>Shot</th><th>Lens</th><th>Movement</th>
-        <th>Lighting</th><th>Mood</th><th>Location</th><th>Dur.</th>
-        <th>Trans.</th><th>Characters</th><th>Tag</th><th>Director Notes</th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  </table>
-  <div class="footer">
-    <span>PREVIS·LAB — ${project.title}</span>
-    <span>Confidential</span>
-  </div>
-</body>
-</html>`;
-
-    const win = window.open("", "_blank", "width=1100,height=800");
-    if (!win) { alert("Please allow pop-ups to export PDF."); return; }
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 400);
+    // Legacy entry point — now delegates to the unified PDF exporter
+    exportShotListPdf(project);
   }
 
   const totalDur = project.scenes.reduce((a, s) => a + (s.timelineMeta?.durationSeconds ?? 3), 0);
@@ -141,10 +77,56 @@ export default function ShotListPanel({ project, onClose }: Props) {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={handlePrint}
-              className="flex items-center gap-1.5 rounded-full bg-amber-400 px-3 py-1.5 text-[10px] font-bold text-black hover:bg-amber-300 transition-colors">
-              ↓ Export PDF
-            </button>
+            {/* Export menu */}
+            <div className="relative">
+              <button
+                onClick={() => setExportOpen(o => !o)}
+                onBlur={() => setTimeout(() => setExportOpen(false), 200)}
+                className="flex items-center gap-1.5 rounded-full bg-amber-400 px-3 py-1.5 text-[10px] font-bold text-black hover:bg-amber-300 transition-colors"
+              >
+                ↓ Export
+                <span className="text-[8px] opacity-60">▾</span>
+              </button>
+              {exportOpen && (
+                <div className="absolute right-0 top-9 z-50 w-56 rounded-lg border border-white/10 bg-[#0e0e18] shadow-xl overflow-hidden">
+                  <ExportMenuItem
+                    icon="📄" label="Shot List (PDF)"
+                    sub="Landscape, full data table"
+                    onClick={() => { exportShotListPdf(project); setExportOpen(false); }}
+                  />
+                  <ExportMenuItem
+                    icon="🎞" label="Storyboard (PDF)"
+                    sub="One shot per page with image"
+                    onClick={() => { exportStoryboardPdf(project); setExportOpen(false); }}
+                  />
+                  <div className="h-px bg-white/5" />
+                  <ExportMenuItem
+                    icon="📝" label="Shot List (TXT)"
+                    sub="Plain-text production sheet"
+                    onClick={() => { exportShotListTxt(project); setExportOpen(false); }}
+                  />
+                  <ExportMenuItem
+                    icon="📊" label="Shot List (CSV)"
+                    sub="Open in Excel / Sheets"
+                    onClick={() => { exportShotListCsv(project); setExportOpen(false); }}
+                  />
+                  <div className="h-px bg-white/5" />
+                  <ExportMenuItem
+                    icon="📦"
+                    label={zipBusy ? `Packaging ${zipProgress.done}/${zipProgress.total}…` : "Project Bundle (ZIP)"}
+                    sub="Images + manifest + shot list"
+                    disabled={zipBusy}
+                    onClick={handleZipExport}
+                  />
+                  <ExportMenuItem
+                    icon="💾" label="Project Backup (JSON)"
+                    sub="Full project for re-import"
+                    onClick={() => { exportProjectJson(project); setExportOpen(false); }}
+                  />
+                </div>
+              )}
+            </div>
+
             <button onClick={onClose}
               className="h-7 w-7 rounded-full flex items-center justify-center text-white/30 hover:text-white hover:bg-white/8 transition-all">
               ✕
@@ -234,5 +216,30 @@ export default function ShotListPanel({ project, onClose }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+
+/* ── Export menu item ───────────────────────────────────────────────────────── */
+
+function ExportMenuItem({
+  icon, label, sub, onClick, disabled,
+}: {
+  icon: string; label: string; sub: string;
+  onClick: () => void; disabled?: boolean;
+}) {
+  return (
+    <button
+      onMouseDown={(e) => { e.preventDefault(); /* keep onBlur from cancelling */ }}
+      onClick={onClick}
+      disabled={disabled}
+      className="w-full text-left px-3 py-2 flex items-start gap-2.5 hover:bg-white/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+    >
+      <span className="text-base leading-none mt-0.5">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] text-white/85 font-semibold leading-tight">{label}</p>
+        <p className="text-[8px] text-white/35 mt-0.5 truncate">{sub}</p>
+      </div>
+    </button>
   );
 }
