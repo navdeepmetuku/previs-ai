@@ -1,21 +1,63 @@
 @import "tailwindcss";
 
-/* ── Design Tokens ──────────────────────────────────────────────────────────── */
+/* ── Design Tokens — PREVIS DARK v2 ────────────────────────────────────────── */
 :root {
-  /* Ink palette — darkest to panel-elevated */
-  --ink-0:  #04040a;
-  --ink-1:  #080810;
+  /* Ink palette — blue-black void, not pure black */
+  --ink-0:  #03030a;
+  --ink-1:  #07070f;
   --ink-2:  #0c0c18;
-  --ink-3:  #10101e;
-  --ink-4:  #141424;
+  --ink-3:  #111120;
+  --ink-4:  #16162a;
 
-  /* Accent */
-  --amber:       #fbbf24;
-  --amber-60:    rgba(251,191,36,0.60);
-  --amber-30:    rgba(251,191,36,0.30);
-  --amber-15:    rgba(251,191,36,0.15);
-  --amber-glow:  0 0 40px rgba(251,191,36,0.18);
-  --amber-pulse: 0 0 80px rgba(251,191,36,0.12);
+  /* ── PRIMARY ACCENT — Cinematic Gold ── */
+  /* Warmer, richer than raw amber — closer to film-reel gold */
+  --gold:          #e8b84b;
+  --gold-bright:   #fbbf24;
+  --gold-60:       rgba(232,184,75,0.60);
+  --gold-30:       rgba(232,184,75,0.30);
+  --gold-15:       rgba(232,184,75,0.15);
+  --gold-08:       rgba(232,184,75,0.08);
+  --gold-glow:     0 0 40px rgba(232,184,75,0.22);
+  --gold-pulse:    0 0 80px rgba(232,184,75,0.14);
+
+  /* Legacy amber aliases — keeps existing components working */
+  --amber:         var(--gold-bright);
+  --amber-60:      var(--gold-60);
+  --amber-30:      var(--gold-30);
+  --amber-15:      var(--gold-15);
+  --amber-glow:    var(--gold-glow);
+  --amber-pulse:   var(--gold-pulse);
+
+  /* ── SECONDARY ACCENT — Steel Blue (#4A7FA7 from Palette 1) ── */
+  /* DaVinci Resolve / Blackmagic industry standard — muted steel, reads on dark */
+  --steel:         #4a7fa7;
+  --steel-bright:  #93c4e0;
+  --steel-60:      rgba(74,127,167,0.60);
+  --steel-30:      rgba(74,127,167,0.30);
+  --steel-15:      rgba(74,127,167,0.15);
+  --steel-08:      rgba(74,127,167,0.08);
+
+  /* Legacy slate aliases — keeps any remaining references working */
+  --slate:         var(--steel);
+  --slate-bright:  var(--steel-bright);
+  --slate-60:      var(--steel-60);
+  --slate-30:      var(--steel-30);
+  --slate-15:      var(--steel-15);
+  --slate-08:      var(--steel-08);
+
+  /* ── TERTIARY — Lens Teal (PREVIS SPACE / 3D only) ── */
+  --teal:          #2dd4bf;
+  --teal-60:       rgba(45,212,191,0.60);
+  --teal-15:       rgba(45,212,191,0.15);
+  --teal-08:       rgba(45,212,191,0.08);
+
+  /* ── SEMANTIC ── */
+  --success:       #34d399;
+  --success-08:    rgba(52,211,153,0.08);
+  --warning:       var(--gold-bright);
+  --error:         #f87171;
+  --error-08:      rgba(248,113,113,0.08);
+  --info:          var(--steel);
 
   /* Surface layers */
   --surface-1: rgba(255,255,255,0.015);
@@ -27,6 +69,12 @@
   --border-1: rgba(255,255,255,0.06);
   --border-2: rgba(255,255,255,0.10);
   --border-3: rgba(255,255,255,0.16);
+
+  /* ── TEXT SCALE ── */
+  --text-0: #f0f0f6;
+  --text-1: rgba(240,240,246,0.70);
+  --text-2: rgba(240,240,246,0.40);
+  --text-3: rgba(240,240,246,0.18);
 
   /* Typography tokens */
   --font-sans: var(--font-geist-sans, "Arial", sans-serif);
@@ -54,7 +102,7 @@
 
   /* Background */
   --background: var(--ink-1);
-  --foreground: #eeeef4;
+  --foreground: var(--text-0);
 }
 
 @theme inline {
@@ -221,9 +269,39 @@ body {
   border-radius: 3px;
 }
 
-/* ── VISH Mascot animations ─────────────────────────────────────────────────── */
+/* ── VISH Eye Blink animation ────────────────────────────────────────────────
+ * Targets the eye circles inside VishMascot via the .vish-eye class.
+ * scaleY 1 → 0.05 → 1 over 180ms, repeats every 3.5s with a 0.5s offset
+ * on the second eye so they blink together but feel natural.
+ */
+@keyframes vish-eye-blink {
+  0%, 92%, 100% { transform: scaleY(1);    }
+  96%           { transform: scaleY(0.05); }
+}
 
-/* Idle: gentle float + slow breath */
+.vish-eye {
+  transform-box:    fill-box;
+  transform-origin: center;
+}
+
+.vish-eye-blink-l {
+  animation: vish-eye-blink 3.5s ease-in-out 0s    infinite;
+}
+.vish-eye-blink-r {
+  animation: vish-eye-blink 3.5s ease-in-out 0.06s infinite;
+}
+
+/* ── VISH Chat Wallpaper ─────────────────────────────────────────────────────
+ * Subtle film-frame grid pattern behind the VISH chat thread.
+ * SVG data URI — no external assets, no network requests.
+ * Opacity kept very low (0.035) so it's felt, not seen.
+ */
+.vish-chat-bg {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='none'/%3E%3Crect x='0' y='0' width='40' height='40' fill='none' stroke='rgba(255,255,255,0.18)' stroke-width='0.5'/%3E%3Crect x='3' y='3' width='34' height='34' fill='none' stroke='rgba(255,255,255,0.07)' stroke-width='0.4'/%3E%3C/svg%3E");
+  background-size: 40px 40px;
+  background-repeat: repeat;
+  background-position: 0 0;
+}
 @keyframes vish-float {
   0%, 100% { transform: translateY(0px) scale(1);       }
   40%      { transform: translateY(-4px) scale(1.008);  }

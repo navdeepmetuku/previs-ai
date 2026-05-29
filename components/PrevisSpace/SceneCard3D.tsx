@@ -35,6 +35,8 @@ interface Props {
   isSelected: boolean;
   onSelect:   () => void;
   onDelete:   () => void;
+  onView3D?:  () => void;
+  is3DMode?:  boolean;
 }
 
 // ── Mood palette ──────────────────────────────────────────────────────────────
@@ -243,7 +245,7 @@ const DEPTH   = 0.08;  // physical thickness of card slab
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function SceneCard3D({ scene, position, isSelected, onSelect, onDelete }: Props) {
+export default function SceneCard3D({ scene, position, isSelected, onSelect, onDelete, onView3D, is3DMode }: Props) {
   const groupRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -481,85 +483,115 @@ export default function SceneCard3D({ scene, position, isSelected, onSelect, onD
         </group>
       )}
 
-      {/* ── Delete button — Html overlay, hover/select reveal ── */}
+      {/* ── Delete + 3D buttons — Html overlay, hover/select reveal ── */}
       {showUI && (
         <Html
           position={[W / 2 + 0.08, H / 2 + 0.08, DEPTH / 2]}
           style={{ pointerEvents: "auto" }}
           zIndexRange={[50, 60]}
         >
-          {!confirmDelete ? (
-            <button
-              title="Remove frame"
-              onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
-              style={{
-                width:        22,
-                height:       22,
-                borderRadius: "50%",
-                background:   "rgba(20,20,30,0.90)",
-                border:       "1px solid rgba(255,255,255,0.15)",
-                color:        "rgba(255,255,255,0.55)",
-                fontSize:     11,
-                cursor:       "pointer",
-                display:      "flex",
-                alignItems:   "center",
-                justifyContent: "center",
-                backdropFilter: "blur(8px)",
-                transition:   "all 0.15s",
-                lineHeight:   1,
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(180,30,30,0.90)"; (e.currentTarget as HTMLButtonElement).style.color = "#fff"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(20,20,30,0.90)"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.55)"; }}
-            >
-              ✕
-            </button>
-          ) : (
-            <div style={{
-              display:        "flex",
-              alignItems:     "center",
-              gap:            5,
-              background:     "rgba(14,14,22,0.96)",
-              border:         "1px solid rgba(255,255,255,0.12)",
-              borderRadius:   5,
-              padding:        "4px 6px",
-              backdropFilter: "blur(10px)",
-              whiteSpace:     "nowrap",
-            }}>
-              <span style={{ fontSize: 9, color: "rgba(255,255,255,0.55)", fontFamily: "monospace" }}>
-                Remove?
-              </span>
+          <div style={{ display: "flex", gap: 4 }}>
+            {/* 3D depth view button — only show if scene has an image */}
+            {scene.imageUrl && onView3D && (
               <button
-                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                title={is3DMode ? "Exit 3D view" : "View in 3D (depth parallax)"}
+                onClick={(e) => { e.stopPropagation(); onView3D(); }}
                 style={{
-                  background:   "rgba(180,30,30,0.85)",
-                  border:       "none",
-                  borderRadius: 3,
-                  color:        "#fff",
+                  width:        22,
+                  height:       22,
+                  borderRadius: "50%",
+                  background:   is3DMode ? "rgba(74,127,167,0.90)" : "rgba(20,20,30,0.90)",
+                  border:       `1px solid ${is3DMode ? "rgba(147,196,224,0.6)" : "rgba(255,255,255,0.15)"}`,
+                  color:        is3DMode ? "#fff" : "rgba(147,196,224,0.85)",
                   fontSize:     9,
-                  padding:      "2px 6px",
                   cursor:       "pointer",
+                  display:      "flex",
+                  alignItems:   "center",
+                  justifyContent: "center",
+                  backdropFilter: "blur(8px)",
                   fontFamily:   "monospace",
+                  fontWeight:   700,
+                  lineHeight:   1,
                 }}
               >
-                Yes
+                3D
               </button>
+            )}
+
+            {/* Delete button */}
+            {!confirmDelete ? (
               <button
-                onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+                title="Remove frame"
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
                 style={{
-                  background:   "rgba(255,255,255,0.08)",
-                  border:       "1px solid rgba(255,255,255,0.12)",
-                  borderRadius: 3,
+                  width:        22,
+                  height:       22,
+                  borderRadius: "50%",
+                  background:   "rgba(20,20,30,0.90)",
+                  border:       "1px solid rgba(255,255,255,0.15)",
                   color:        "rgba(255,255,255,0.55)",
-                  fontSize:     9,
-                  padding:      "2px 6px",
+                  fontSize:     11,
                   cursor:       "pointer",
-                  fontFamily:   "monospace",
+                  display:      "flex",
+                  alignItems:   "center",
+                  justifyContent: "center",
+                  backdropFilter: "blur(8px)",
+                  transition:   "all 0.15s",
+                  lineHeight:   1,
                 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(180,30,30,0.90)"; (e.currentTarget as HTMLButtonElement).style.color = "#fff"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(20,20,30,0.90)"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.55)"; }}
               >
-                No
+                ✕
               </button>
-            </div>
-          )}
+            ) : (
+              <div style={{
+                display:        "flex",
+                alignItems:     "center",
+                gap:            5,
+                background:     "rgba(14,14,22,0.96)",
+                border:         "1px solid rgba(255,255,255,0.12)",
+                borderRadius:   5,
+                padding:        "4px 6px",
+                backdropFilter: "blur(10px)",
+                whiteSpace:     "nowrap",
+              }}>
+                <span style={{ fontSize: 9, color: "rgba(255,255,255,0.55)", fontFamily: "monospace" }}>
+                  Remove?
+                </span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                  style={{
+                    background:   "rgba(180,30,30,0.85)",
+                    border:       "none",
+                    borderRadius: 3,
+                    color:        "#fff",
+                    fontSize:     9,
+                    padding:      "2px 6px",
+                    cursor:       "pointer",
+                    fontFamily:   "monospace",
+                  }}
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+                  style={{
+                    background:   "rgba(255,255,255,0.08)",
+                    border:       "1px solid rgba(255,255,255,0.12)",
+                    borderRadius: 3,
+                    color:        "rgba(255,255,255,0.55)",
+                    fontSize:     9,
+                    padding:      "2px 6px",
+                    cursor:       "pointer",
+                    fontFamily:   "monospace",
+                  }}
+                >
+                  No
+                </button>
+              </div>
+            )}
+          </div>
         </Html>
       )}
     </group>

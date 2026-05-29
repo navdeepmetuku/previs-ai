@@ -461,9 +461,9 @@ function CloudSyncCard({
                style={{
                  fontSize: 7.5, fontFamily: "monospace",
                  padding: "4px 8px", borderRadius: 3,
-                 border: "1px solid rgba(99,102,241,0.30)",
-                 background: "rgba(99,102,241,0.08)",
-                 color: "rgba(147,150,255,0.85)",
+                 border: "1px solid rgba(74,127,167,0.30)",
+                 background: "rgba(74,127,167,0.08)",
+                 color: "rgba(147,196,224,0.85)",
                  letterSpacing: "0.15em", textTransform: "uppercase",
                  textDecoration: "none", display: "inline-block",
                }}>

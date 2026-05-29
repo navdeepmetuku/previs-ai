@@ -200,7 +200,7 @@ export default function CloudSyncIndicator({ projectId }: { projectId?: string }
                   <li>Copy the SQL below</li>
                   <li>
                     {editorUrl
-                      ? <><a href={editorUrl} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(147,150,255,0.85)", textDecoration: "underline" }}>Open Supabase SQL Editor ↗</a> (opens in new tab)</>
+                      ? <><a href={editorUrl} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(147,196,224,0.85)", textDecoration: "underline" }}>Open Supabase SQL Editor ↗</a> (opens in new tab)</>
                       : "Open your Supabase project → SQL Editor"
                     }
                   </li>
@@ -225,9 +225,9 @@ export default function CloudSyncIndicator({ projectId }: { projectId?: string }
                       style={{
                         fontSize: 8, fontFamily: "monospace",
                         padding: "4px 10px", borderRadius: 4,
-                        border: "1px solid rgba(99,102,241,0.35)",
-                        background: "rgba(99,102,241,0.10)",
-                        color: "rgba(147,150,255,0.85)",
+                        border: "1px solid rgba(74,127,167,0.35)",
+                        background: "rgba(74,127,167,0.10)",
+                        color: "rgba(147,196,224,0.85)",
                         letterSpacing: "0.12em", textTransform: "uppercase",
                         textDecoration: "none",
                       }}

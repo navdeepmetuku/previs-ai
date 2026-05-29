@@ -343,14 +343,14 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
           width:          collapsed ? 36 : 22,
           height:         collapsed ? 36 : 22,
           borderRadius:   collapsed ? 6 : "50%",
-          background:     "rgba(99,102,241,0.14)",
-          border:         "1px solid rgba(99,102,241,0.28)",
+          background:     "rgba(74,127,167,0.14)",
+          border:         "1px solid rgba(74,127,167,0.28)",
           cursor:         collapsed ? drag.handleProps.style.cursor : "pointer",
           display:        "flex",
           alignItems:     "center",
           justifyContent: "center",
           fontSize:       collapsed ? 12 : 9,
-          color:          "rgba(147,150,255,0.75)",
+          color:          "rgba(147,196,224,0.75)",
           flexShrink:     0,
           zIndex:         10,
           touchAction:    "none",
@@ -362,7 +362,7 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
       {collapsed && (
         <div style={{
           writingMode:"vertical-rl", textOrientation:"mixed",
-          fontSize:7, color:"rgba(147,150,255,0.40)",
+          fontSize:7, color:"rgba(147,196,224,0.40)",
           letterSpacing:"0.2em", textTransform:"uppercase",
           padding:"8px 0", textAlign:"center",
         }}>
@@ -382,7 +382,7 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
             }}
           >
             <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
-              <span style={{ fontSize:8, color:"rgba(147,150,255,0.75)", letterSpacing:"0.22em", textTransform:"uppercase" }}>
+              <span style={{ fontSize:8, color:"rgba(147,196,224,0.75)", letterSpacing:"0.22em", textTransform:"uppercase" }}>
                 Story Engine
               </span>
               <span style={{ fontSize:7, color:"rgba(255,255,255,0.18)" }}>
@@ -398,10 +398,10 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
                   <button key={t} data-no-drag onClick={() => setTab(t)} style={{
                     flex:1, fontSize:6.5, padding:"3.5px 0",
                     borderRadius:"3px 3px 0 0",
-                    border:`1px solid ${tab === t ? "rgba(99,102,241,0.40)" : "rgba(255,255,255,0.06)"}`,
+                    border:`1px solid ${tab === t ? "rgba(74,127,167,0.40)" : "rgba(255,255,255,0.06)"}`,
                     borderBottom:"none",
-                    background: tab === t ? "rgba(99,102,241,0.14)" : "rgba(255,255,255,0.02)",
-                    color:      tab === t ? "rgba(147,150,255,0.90)" : "rgba(255,255,255,0.28)",
+                    background: tab === t ? "rgba(74,127,167,0.14)" : "rgba(255,255,255,0.02)",
+                    color:      tab === t ? "rgba(147,196,224,0.90)" : "rgba(255,255,255,0.28)",
                     cursor:"pointer", textTransform:"uppercase" as const, letterSpacing:"0.12em",
                     fontWeight: t === "issues" && analysis.issues.filter(i=>i.type==="warning"||i.type==="error").length > 0 ? 700 : 400,
                   }}>
@@ -415,7 +415,7 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
           {/* ── Tab content ── */}
           <div style={{
             flex:1, overflowY:"auto", padding:"10px 12px",
-            borderTop:"1px solid rgba(99,102,241,0.18)",
+            borderTop:"1px solid rgba(74,127,167,0.18)",
           }}>
 
             {/* ── ARC TAB ── */}
@@ -473,7 +473,7 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
                         <div key={type} style={{ display:"flex", alignItems:"center", gap:5, marginBottom:3 }}>
                           <span style={{ fontSize:6.5, color:"rgba(255,255,255,0.35)", width:32, flexShrink:0 }}>{ab}</span>
                           <div style={{ flex:1, height:4, background:"rgba(255,255,255,0.06)", borderRadius:2, overflow:"hidden" }}>
-                            <div style={{ height:"100%", width:`${pct}%`, background:"rgba(147,150,255,0.55)", borderRadius:2 }} />
+                            <div style={{ height:"100%", width:`${pct}%`, background:"rgba(147,196,224,0.55)", borderRadius:2 }} />
                           </div>
                           <span style={{ fontSize:6.5, color:"rgba(255,255,255,0.25)", width:20, textAlign:"right" }}>{pct}%</span>
                         </div>
@@ -485,15 +485,15 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
                 <button onClick={getAiNarrative} disabled={aiLoading} style={{
                   width:"100%", marginTop:10, padding:"6px 0",
                   borderRadius:4, cursor:aiLoading?"not-allowed":"pointer",
-                  border:"1px solid rgba(99,102,241,0.30)",
-                  background:"rgba(99,102,241,0.08)",
-                  color:"rgba(147,150,255,0.75)", fontSize:7.5,
+                  border:"1px solid rgba(74,127,167,0.30)",
+                  background:"rgba(74,127,167,0.08)",
+                  color:"rgba(147,196,224,0.75)", fontSize:7.5,
                   letterSpacing:"0.15em", textTransform:"uppercase",
                 }}>
                   {aiLoading ? "Thinking…" : "◈ VISH Story Read"}
                 </button>
                 {aiInsight && (
-                  <div style={{ marginTop:8, padding:"8px 10px", borderRadius:4, background:"rgba(99,102,241,0.06)", border:"1px solid rgba(99,102,241,0.15)" }}>
+                  <div style={{ marginTop:8, padding:"8px 10px", borderRadius:4, background:"rgba(74,127,167,0.06)", border:"1px solid rgba(74,127,167,0.15)" }}>
                     <p style={{ fontSize:8.5, color:"rgba(200,200,240,0.80)", lineHeight:1.6 }}>{aiInsight}</p>
                   </div>
                 )}
@@ -530,7 +530,7 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
                                 <div key={i} style={{
                                   flex:1, height:5, borderRadius:1,
                                   background: present
-                                    ? "rgba(147,150,255,0.65)"
+                                    ? "rgba(147,196,224,0.65)"
                                     : "rgba(255,255,255,0.06)",
                                 }} title={present ? `Shot ${i+1}` : ""} />
                               );
@@ -586,7 +586,7 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
                           <div key={i} style={{
                             flex:1, height:4, borderRadius:1,
                             background: loc.sceneIdxs.includes(i)
-                              ? `rgba(99,102,241,${0.3 + (pct/100)*0.5})`
+                              ? `rgba(74,127,167,${0.3 + (pct/100)*0.5})`
                               : "rgba(255,255,255,0.05)",
                           }} />
                         ))}
@@ -622,10 +622,10 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
                   analysis.issues.map((issue, i) => {
                     const bg    = issue.type === "error"   ? "rgba(200,40,40,0.10)"
                                 : issue.type === "warning" ? "rgba(200,120,30,0.10)"
-                                :                            "rgba(99,102,241,0.08)";
+                                :                            "rgba(74,127,167,0.08)";
                     const border = issue.type === "error"   ? "rgba(200,40,40,0.28)"
                                  : issue.type === "warning" ? "rgba(200,120,30,0.28)"
-                                 :                            "rgba(99,102,241,0.20)";
+                                 :                            "rgba(74,127,167,0.20)";
                     const color  = issue.type === "error"   ? "rgba(255,140,120,0.85)"
                                  : issue.type === "warning" ? "rgba(255,185,100,0.85)"
                                  :                            "rgba(160,165,255,0.80)";
@@ -662,7 +662,7 @@ export default function StoryEngine({ project, scenes, memory: memoryProp }: Pro
 
                 {memory.creativeTendencies.length > 0 && (
                   <div style={{ marginTop:10, marginBottom:4 }}>
-                    <p style={{ fontSize:6.5, color:"rgba(147,150,255,0.50)", textTransform:"uppercase", letterSpacing:"0.18em", marginBottom:5 }}>
+                    <p style={{ fontSize:6.5, color:"rgba(147,196,224,0.50)", textTransform:"uppercase", letterSpacing:"0.18em", marginBottom:5 }}>
                       VISH Observations
                     </p>
                     {memory.creativeTendencies.map((t, i) => (

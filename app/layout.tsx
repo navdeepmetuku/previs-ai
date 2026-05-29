@@ -59,7 +59,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col film-grain bg-[#060608]">
+      <body className="min-h-full flex flex-col film-grain bg-[#07070f]">
         {children}
         {/* Phase 15 — VISH floating bubble: visible on every page */}
         <VishBubble />

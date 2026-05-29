@@ -530,9 +530,9 @@ export default function VishDirectorPanel({ project, scenes, selectedScene, onGe
                         title="Generate frames for all shots without images"
                         style={{
                           flex:1, padding:"6px 0", borderRadius:4,
-                          border:"1px solid rgba(99,102,241,0.30)",
-                          background:"rgba(99,102,241,0.08)",
-                          color: scenes.every(s => s.imageUrl) ? "rgba(255,255,255,0.15)" : "rgba(147,150,255,0.80)",
+                          border:"1px solid rgba(74,127,167,0.30)",
+                          background:"rgba(74,127,167,0.08)",
+                          color: scenes.every(s => s.imageUrl) ? "rgba(255,255,255,0.15)" : "rgba(147,196,224,0.80)",
                           fontSize:7.5, cursor: scenes.every(s => s.imageUrl) ? "not-allowed" : "pointer",
                           letterSpacing:"0.12em", textTransform:"uppercase" as const,
                         }}
@@ -565,7 +565,7 @@ export default function VishDirectorPanel({ project, scenes, selectedScene, onGe
                         const col = !st             ? "rgba(255,255,255,0.08)"
                                   : st.status === "done"       ? "rgba(80,200,100,0.60)"
                                   : st.status === "generating" ? "rgba(251,191,36,0.70)"
-                                  : st.status === "queued"     ? "rgba(99,102,241,0.50)"
+                                  : st.status === "queued"     ? "rgba(74,127,167,0.50)"
                                   : st.status === "failed"     ? "rgba(220,80,60,0.60)"
                                   : "rgba(255,255,255,0.08)";
                         return (
@@ -702,7 +702,7 @@ export default function VishDirectorPanel({ project, scenes, selectedScene, onGe
             {tab === "chat" && (
               <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
                 {/* Message thread */}
-                <div style={{ flex:1, overflowY:"auto", padding:"10px 12px", display:"flex", flexDirection:"column", gap:8 }}>
+                <div className="vish-chat-bg" style={{ flex:1, overflowY:"auto", padding:"10px 12px", display:"flex", flexDirection:"column", gap:8 }}>
                   {messages.map((msg) => (
                     <div key={msg.id} style={{
                       display:      "flex",

@@ -140,7 +140,7 @@ export default function MiniTimeline({ scenes, selectedId, onSelect, onReorder }
                 flexShrink:   0,
                 borderRadius: 3,
                 border:       isDragTarget
-                  ? "2px solid rgba(99,102,241,0.85)"
+                  ? "2px solid rgba(74,127,167,0.85)"
                   : isActive
                   ? `1px solid ${accent}`
                   : "1px solid rgba(255,255,255,0.07)",
@@ -194,7 +194,7 @@ export default function MiniTimeline({ scenes, selectedId, onSelect, onReorder }
                 {/* Drop target indicator — left edge stripe */}
                 {isDragTarget && (
                   <div className="absolute left-0 top-0 bottom-0 w-0.5 pointer-events-none"
-                    style={{ background: "rgba(99,102,241,0.9)" }} />
+                    style={{ background: "rgba(74,127,167,0.9)" }} />
                 )}
               </div>
 

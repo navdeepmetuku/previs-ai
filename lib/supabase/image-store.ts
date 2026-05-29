@@ -162,19 +162,26 @@ export async function put(img: StoredImage): Promise<void> {
 /**
  * Hydrate all stored images for a given project into memory + localStorage.
  * Called when entering Studio, PREVIS SPACE, or Review Mode.
+ *
+ * Fix: only overwrite an in-memory entry if the Supabase row is strictly
+ * newer than what we already have. This prevents a stale Supabase row from
+ * clobbering a freshly-generated image that was written to memory this session.
  */
 export async function hydrateProject(projectId: string): Promise<number> {
   const sb = getSupabase();
   if (!sb) return 0;
 
   try {
-    // Get latest image per scene_id for this project
+    // Fetch the single latest active row per scene_id for this project.
+    // ORDER BY created_at DESC + client-side dedup gives us the newest row
+    // per scene without requiring a DISTINCT ON (not supported by PostgREST).
     const { data, error } = await sb
       .from("scene_images")
       .select("scene_id, project_id, image_url, prompt, provider, model, tier, bytes, duration_ms, created_at")
       .eq("project_id", projectId)
       .eq("is_active", true)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(500); // safety cap — prevents huge payloads on large projects
 
     if (error) {
       const msg  = (error.message ?? "").toLowerCase();
@@ -190,13 +197,24 @@ export async function hydrateProject(projectId: string): Promise<number> {
       return 0;
     }
 
-    // Take the first row per scene (highest created_at thanks to ordering)
+    // Take the first (newest) row per scene_id.
+    // Only overwrite an existing in-memory entry if the Supabase row is newer —
+    // this prevents a stale DB row from clobbering a freshly-generated image.
     const seen = new Set<string>();
     let added = 0;
     for (const row of data) {
       const sceneId = row.scene_id as string;
-      if (seen.has(sceneId)) continue;
+      if (seen.has(sceneId)) continue; // already took the newest row for this scene
       seen.add(sceneId);
+
+      const rowCreatedAt = row.created_at as string;
+
+      // If we already have a newer or equal entry in memory, skip this row
+      const existing = _mem.get(sceneId);
+      if (existing?.createdAt && rowCreatedAt && existing.createdAt >= rowCreatedAt) {
+        console.log(`[ImageStore] hydrate: skipping scene ${sceneId.slice(0, 8)} — in-memory entry is newer`);
+        continue;
+      }
 
       const img: StoredImage = {
         sceneId,
@@ -208,7 +226,7 @@ export async function hydrateProject(projectId: string): Promise<number> {
         tier:       row.tier as string | null,
         bytes:      row.bytes as number | null,
         durationMs: row.duration_ms as number | null,
-        createdAt:  row.created_at as string,
+        createdAt:  rowCreatedAt,
       };
       _mem.set(sceneId, img);
       writeLs(img);

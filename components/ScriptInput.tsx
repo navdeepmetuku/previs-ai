@@ -23,6 +23,7 @@ import { useState } from "react";
 import type { Project, Scene } from "@/types";
 import { put as putImage } from "@/lib/supabase/image-store";
 import { getImageTier, bumpQuota } from "@/lib/model-tiers";
+import { playTypewriterClick } from "@/lib/sounds";
 
 interface Props {
   onProjectCreated: (project: Project) => void;
@@ -238,6 +239,7 @@ export default function ScriptInput({ onProjectCreated, onProjectUpdated }: Prop
           <textarea
             value={script}
             onChange={e => setScript(e.target.value)}
+            onKeyDown={() => playTypewriterClick()}
             placeholder="Paste your script here… (INT./EXT. scenes, action lines, dialogue)"
             required
             rows={14}

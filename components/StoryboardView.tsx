@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { Project, Scene } from "@/types";
 import SceneCard from "@/components/SceneCard";
@@ -12,6 +12,7 @@ import AiDirectorPanel from "@/components/AiDirectorPanel";
 import ModelSettingsPanel from "@/components/ModelSettingsPanel";
 import CloudSyncIndicator from "@/components/CloudSyncIndicator";
 import { ResetLayoutButton } from "@/components/DraggablePanel";
+import { playSpaceWhoosh, playPaperSound } from "@/lib/sounds";
 
 interface Props {
   project: Project;
@@ -28,6 +29,9 @@ export default function StoryboardView({ project, onProjectUpdated }: Props) {
   const [presenting,    setPresenting]    = useState(false);
   const [showShotList,  setShowShotList]  = useState(false);
   const [showAiDirector, setShowAiDirector] = useState(false);
+
+  // Play paper sound when storyboard first mounts
+  useEffect(() => { playPaperSound(); }, []);
 
   function handleSceneUpdate(updatedScene: Scene) {
     const scenes = project.scenes.map((s) =>
@@ -122,7 +126,8 @@ export default function StoryboardView({ project, onProjectUpdated }: Props) {
           {/* ── SPACE button — opens 3D cinematic workspace ── */}
           <Link
             href="/previs-space"
-            className="flex items-center gap-1.5 rounded-full border border-indigo-400/30 bg-indigo-400/8 px-3 py-1 text-[10px] font-mono text-indigo-300/70 hover:text-indigo-200 hover:border-indigo-400/50 hover:bg-indigo-400/15 transition-all"
+            onClick={() => playSpaceWhoosh()}
+            className="flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-400/8 px-3 py-1 text-[10px] font-mono text-violet-300/70 hover:text-violet-200 hover:border-violet-400/50 hover:bg-violet-400/15 transition-all"
             title="Open PREVIS SPACE — spatial cinematic 3D workspace"
           >
             <span className="text-[8px]">⬡</span> Space
@@ -415,7 +420,7 @@ function TimelineCell({ label, value, accent, className = "" }: {
 function moodColor(mood: string): string {
   const m: Record<string, string> = {
     Tense: "text-red-400",       Dramatic: "text-purple-400",  Romantic: "text-pink-400",
-    Action: "text-orange-400",   Mysterious: "text-indigo-400", Melancholic: "text-blue-400",
+    Action: "text-orange-400",   Mysterious: "text-violet-400", Melancholic: "text-blue-400",
     Triumphant: "text-yellow-400", Horror: "text-zinc-400",    Comedic: "text-green-400", Serene: "text-cyan-400",
   };
   return m[mood] ?? "text-white/65";

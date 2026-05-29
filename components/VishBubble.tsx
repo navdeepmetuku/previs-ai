@@ -349,7 +349,7 @@ function VishPanel({
       <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
         {tab === "chat" && (
           <>
-            <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div className="vish-chat-bg" style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
               {messages.map(m => <MessageBubble key={m.id} message={m} />)}
               {loading && (
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

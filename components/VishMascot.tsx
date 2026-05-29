@@ -165,14 +165,24 @@ export default function VishMascot({ state = "idle", size = 64, className = "" }
           cy={headY - headR * 0.15}
           r={headR * 0.13}
           fill={eyeColor}
-          className="transition-colors duration-300"
+          className={[
+            "vish-eye transition-colors duration-300",
+            state === "idle" || state === "thinking" || state === "speaking"
+              ? "vish-eye-blink-l"
+              : "",
+          ].join(" ")}
         />
         <circle
           cx={cx + headR * 0.32}
           cy={headY - headR * 0.15}
           r={headR * 0.13}
           fill={eyeColor}
-          className="transition-colors duration-300"
+          className={[
+            "vish-eye transition-colors duration-300",
+            state === "idle" || state === "thinking" || state === "speaking"
+              ? "vish-eye-blink-r"
+              : "",
+          ].join(" ")}
         />
         {/* Eye shine */}
         <circle cx={cx - headR * 0.28} cy={headY - headR * 0.20} r={headR * 0.04} fill="white" opacity="0.8" />

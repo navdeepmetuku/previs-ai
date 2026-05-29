@@ -101,9 +101,9 @@ export default function PrevisSpacePage() {
 
           <span className="text-white/10">›</span>
 
-          <div className="flex items-center gap-1.5 rounded-full border border-indigo-400/25 bg-indigo-400/6 px-2.5 py-0.5">
-            <span className="text-[8px] text-indigo-300/60">⬡</span>
-            <span className="text-[9px] font-mono text-indigo-300/70 uppercase tracking-widest">Space</span>
+          <div className="flex items-center gap-1.5 rounded-full border border-violet-400/25 bg-violet-400/6 px-2.5 py-0.5">
+            <span className="text-[8px] text-violet-300/60">⬡</span>
+            <span className="text-[9px] font-mono text-violet-300/70 uppercase tracking-widest">Space</span>
           </div>
 
           {project && (
@@ -126,7 +126,7 @@ export default function PrevisSpacePage() {
                 setProject(p);
                 setReviewScenes(p?.scenes ?? []);
               }}
-              className="bg-white/[0.04] border border-white/8 rounded-md px-2 py-1 text-[9px] text-white/45 outline-none focus:border-indigo-400/30 font-mono"
+              className="bg-white/[0.04] border border-white/8 rounded-md px-2 py-1 text-[9px] text-white/45 outline-none focus:border-violet-400/30 font-mono"
             >
               {projects.map(p => (
                 <option key={p.id} value={p.id}>{p.title}</option>
@@ -176,12 +176,12 @@ export default function PrevisSpacePage() {
         <div
           className="absolute top-[45px] inset-x-0 z-50 flex items-center justify-between px-5 py-3 pointer-events-none"
           style={{
-            background:   "linear-gradient(90deg, rgba(79,70,229,0.18) 0%, rgba(79,70,229,0.08) 50%, transparent 100%)",
-            borderBottom: "1px solid rgba(99,102,241,0.2)",
+            background:   "linear-gradient(90deg, rgba(74,127,167,0.18) 0%, rgba(74,127,167,0.08) 50%, transparent 100%)",
+            borderBottom: "1px solid rgba(74,127,167,0.2)",
           }}
         >
           <div className="flex items-center gap-3">
-            <span className="text-indigo-300/70 text-sm">⬡</span>
+            <span className="text-violet-300/70 text-sm">⬡</span>
             <div>
               <p className="text-[11px] font-bold text-white/80 tracking-wide">
                 PREVIS SPACE — Spatial Cinematic Workspace
@@ -217,13 +217,13 @@ function WorkspaceLoading() {
       style={{ background: "#030308" }}>
       {/* Animated spatial grid indicator */}
       <div className="relative flex items-center justify-center w-16 h-16">
-        <div className="absolute inset-0 rounded-full border border-indigo-400/20 animate-ping" style={{ animationDuration: "1.8s" }} />
+        <div className="absolute inset-0 rounded-full border border-violet-400/20 animate-ping" style={{ animationDuration: "1.8s" }} />
         <div className="h-10 w-10 rounded-sm border border-amber-400/25 bg-amber-400/6 flex items-center justify-center">
           <span className="text-amber-400 text-lg font-black animate-pulse">P</span>
         </div>
       </div>
       <div className="text-center">
-        <p className="text-[9px] font-mono text-indigo-300/40 uppercase tracking-[0.25em]">
+        <p className="text-[9px] font-mono text-violet-300/40 uppercase tracking-[0.25em]">
           Initializing PREVIS SPACE
         </p>
         <p className="text-[7px] font-mono text-white/12 mt-1.5">
@@ -244,7 +244,7 @@ function NoProject() {
       <div>
         <h2 className="text-sm font-semibold text-white/40">No project in PREVIS SPACE</h2>
         <p className="mt-1.5 text-[10px] text-white/20 max-w-xs leading-relaxed">
-          Open a storyboard in Studio, then click <span className="text-indigo-300/60">⬡ Space</span> in the toolbar to enter the spatial workspace.
+          Open a storyboard in Studio, then click <span className="text-violet-300/60">⬡ Space</span> in the toolbar to enter the spatial workspace.
         </p>
       </div>
       <Link href="/studio"

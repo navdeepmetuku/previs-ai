@@ -34,6 +34,8 @@ import ShotDetailPanel from "./ShotDetailPanel";
 import VishDirectorPanel from "./VishDirectorPanel";
 import StoryEngine from "./StoryEngine";
 import { useGenerationQueue } from "@/hooks/useGenerationQueue";
+import DepthViewer from "./DepthViewer";
+import { estimateDepth, preloadDepthModel } from "@/lib/depth-estimator";
 
 // ── Error boundary — prevents a single broken card from crashing the Canvas ──
 
@@ -123,15 +125,19 @@ interface SceneInternalProps {
   onSelect:    (id: string) => void;
   onDelete:    (id: string) => void;
   controlsRef: React.RefObject<OrbitControlsImpl | null>;
+  depth3DId:   string | null;
+  depth3DUrl:  string | null;
+  onView3D:    (id: string) => void;
 }
 
-function WorkspaceScene({ scenes, selectedId, onSelect, onDelete, controlsRef }: SceneInternalProps) {
+function WorkspaceScene({ scenes, selectedId, onSelect, onDelete, controlsRef, depth3DId, depth3DUrl, onView3D }: SceneInternalProps) {
   const safe      = scenes ?? [];
   const positions = computeCardPositions(safe.length);
   const selIdx    = safe.findIndex(s => s.id === selectedId);
   const selPos    = selIdx >= 0 ? positions[selIdx] : null;
+  const depth3DIdx = safe.findIndex(s => s.id === depth3DId);
+  const depth3DPos = depth3DIdx >= 0 ? positions[depth3DIdx] : null;
 
-  // Memoize to avoid new THREE.Vector3 allocation on every render
   const targetVec = useMemo(
     () => selPos ? new THREE.Vector3(...selPos) : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -149,9 +155,20 @@ function WorkspaceScene({ scenes, selectedId, onSelect, onDelete, controlsRef }:
             isSelected={scene.id === selectedId}
             onSelect={() => onSelect(scene.id)}
             onDelete={() => onDelete(scene.id)}
+            onView3D={() => onView3D(scene.id)}
+            is3DMode={scene.id === depth3DId}
           />
         </SceneErrorBoundary>
       ))}
+      {/* Depth viewer — renders when a scene is in 3D mode */}
+      {depth3DId && depth3DUrl && depth3DPos && (
+        <DepthViewer
+          imageUrl={safe.find(s => s.id === depth3DId)?.imageUrl ?? ""}
+          depthUrl={depth3DUrl}
+          position={[depth3DPos[0], depth3DPos[1] + 0.5, depth3DPos[2] + 1.5]}
+          onClose={() => onView3D(depth3DId)}
+        />
+      )}
       <VishOrb selectedScenePosition={selPos} />
       <CameraFocuser targetPos={targetVec} controlsRef={controlsRef} />
     </>
@@ -165,9 +182,25 @@ export default function Workspace({ project, onProjectUpdated }: { project: Proj
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
 
+  // ── 3D depth viewer state ──────────────────────────────────────────────────
+  const [depth3DId,      setDepth3DId]      = useState<string | null>(null);
+  const [depth3DUrl,     setDepth3DUrl]     = useState<string | null>(null);
+  const [depth3DLoading, setDepth3DLoading] = useState(false);
+  const [depth3DError,   setDepth3DError]   = useState<string | null>(null);
+
   // Sync on project change: full replace when project switches,
   // otherwise patch only imageUrl fields that changed.
   const prevProjectRef = useRef<Project | null>(null);
+  useEffect(() => {
+    // ── RUNTIME VERIFICATION LOG ──────────────────────────────────────────
+    console.log("╔══════════════════════════════════════════════════════════╗");
+    console.log("║  [RUNTIME-VERIFY] Workspace mounted                      ║");
+    console.log("║  depth-estimator.ts IS the active module (new pipeline)  ║");
+    console.log("║  No HuggingFace Inference API. No /api/depth-token.      ║");
+    console.log("╚══════════════════════════════════════════════════════════╝");
+    // Preload depth model in background so it's ready when user clicks 3D
+    preloadDepthModel();
+  }, []);
   useEffect(() => {
     const prev  = prevProjectRef.current;
     const next  = project.scenes ?? [];
@@ -205,10 +238,8 @@ export default function Workspace({ project, onProjectUpdated }: { project: Proj
   }, []);
 
   const handleDelete = useCallback((id: string) => {
-    // Use a single functional updater to avoid stale closure over `scenes`
     setScenes(prev => {
       const next = prev.filter(s => s.id !== id);
-      // Derive new selection inside the same batch
       setSelectedId(sel => {
         if (sel !== id) return sel;
         const idx = prev.findIndex(s => s.id === id);
@@ -217,6 +248,63 @@ export default function Workspace({ project, onProjectUpdated }: { project: Proj
       return next;
     });
   }, []);
+
+  // Toggle 3D depth view for a scene — uses local Depth Anything V2 (no HuggingFace API)
+  const handleView3D = useCallback(async (id: string) => {
+    // ── RUNTIME VERIFICATION ──────────────────────────────────────────────
+    console.log("╔══════════════════════════════════════════════════════════╗");
+    console.log("║  [RUNTIME-VERIFY] handleView3D() CALLED                  ║");
+    console.log(`║  scene id: ${id.slice(0, 20).padEnd(20)}                    ║`);
+    console.log("║  Pipeline: Depth Anything V2 LOCAL (no HF API)           ║");
+    console.log("╚══════════════════════════════════════════════════════════╝");
+
+    // Toggle off
+    if (depth3DId === id) {
+      console.log("[RUNTIME-VERIFY] Toggling 3D OFF");
+      setDepth3DId(null);
+      setDepth3DUrl(null);
+      setDepth3DError(null);
+      return;
+    }
+
+    const scene = scenes.find(s => s.id === id);
+    console.log("[RUNTIME-VERIFY] scene found:", !!scene, "| imageUrl present:", !!scene?.imageUrl);
+
+    if (!scene?.imageUrl) {
+      setDepth3DError("Generate an image for this shot first, then try 3D view.");
+      setTimeout(() => setDepth3DError(null), 4000);
+      return;
+    }
+
+    setDepth3DId(id);
+    setDepth3DUrl(null);
+    setDepth3DError(null);
+    setDepth3DLoading(true);
+
+    try {
+      console.log("[RUNTIME-VERIFY] Calling estimateDepth() from lib/depth-estimator.ts…");
+      const depthUrl = await estimateDepth(
+        scene.imageUrl,
+        (phase, pct) => {
+          console.log(`[RUNTIME-VERIFY] Progress: ${phase}${pct !== undefined ? ` (${pct}%)` : ""}`);
+        },
+      );
+      console.log("[RUNTIME-VERIFY] estimateDepth() SUCCESS — depthUrl length:", depthUrl.length);
+      setDepth3DUrl(depthUrl);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const stack = err instanceof Error ? err.stack : "";
+      console.error("╔══════════════════════════════════════════════════════════╗");
+      console.error("║  [RUNTIME-VERIFY] estimateDepth() THREW                  ║");
+      console.error(`║  Error: ${msg.slice(0, 50).padEnd(50)}  ║`);
+      console.error("╚══════════════════════════════════════════════════════════╝");
+      console.error("[RUNTIME-VERIFY] Full stack:", stack);
+      setDepth3DError(msg.slice(0, 80));
+      setDepth3DId(null);
+    } finally {
+      setDepth3DLoading(false);
+    }
+  }, [depth3DId, scenes]);
 
   // ── Generation queue — background continuity-aware frame generation ──────
   const { enqueue, statuses: genStatuses, isRunning: genRunning, cancel: cancelGen, pending: genPending } =
@@ -286,10 +374,68 @@ export default function Workspace({ project, onProjectUpdated }: { project: Proj
           onSelect={handleSelect}
           onDelete={handleDelete}
           controlsRef={controlsRef}
+          depth3DId={depth3DId}
+          depth3DUrl={depth3DUrl}
+          onView3D={handleView3D}
         />
       </Canvas>
 
       <MiniTimeline scenes={scenes} selectedId={selectedId} onSelect={handleSelect} onReorder={handleReorder} />
+
+      {/* ── 3D depth loading indicator ── */}
+      {depth3DLoading && (
+        <div style={{
+          position:   "fixed",
+          bottom:     110,
+          left:       "50%",
+          transform:  "translateX(-50%)",
+          zIndex:     50,
+          background: "rgba(8,8,18,0.95)",
+          border:     "1px solid rgba(74,127,167,0.35)",
+          borderRadius: 6,
+          padding:    "8px 16px",
+          display:    "flex",
+          alignItems: "center",
+          gap:        8,
+          backdropFilter: "blur(12px)",
+        }}>
+          <div style={{
+            width: 8, height: 8, borderRadius: "50%",
+            background: "#4a7fa7",
+            animation: "pulse 1.2s ease-in-out infinite",
+          }} />
+          <span style={{ fontSize: 9, fontFamily: "monospace", color: "rgba(147,196,224,0.85)", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+            Depth Anything V2 — generating depth map…
+          </span>
+        </div>
+      )}
+
+      {/* ── 3D depth error ── */}
+      {depth3DError && (
+        <div style={{
+          position:   "fixed",
+          bottom:     110,
+          left:       "50%",
+          transform:  "translateX(-50%)",
+          zIndex:     50,
+          background: "rgba(18,8,8,0.95)",
+          border:     "1px solid rgba(248,113,113,0.30)",
+          borderRadius: 6,
+          padding:    "8px 16px",
+          display:    "flex",
+          alignItems: "center",
+          gap:        8,
+          backdropFilter: "blur(12px)",
+        }}>
+          <span style={{ fontSize: 9, fontFamily: "monospace", color: "rgba(248,113,113,0.85)", letterSpacing: "0.12em" }}>
+            3D unavailable — {depth3DError.slice(0, 60)}
+          </span>
+          <button
+            onClick={() => setDepth3DError(null)}
+            style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 11 }}
+          >✕</button>
+        </div>
+      )}
 
       {/* ── VISH Director Panel ── */}
       <VishDirectorPanel
